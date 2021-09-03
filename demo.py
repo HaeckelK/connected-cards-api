@@ -23,6 +23,11 @@ def main():
     note = NoteOut(**json.loads(response.content))
     print(note)
 
+    # Trigger Review Generation
+    print("Triggering Review Generation")
+    response = requests.get(base_url + "generate_reviews")
+    print(response.text)
+
     return
 
 

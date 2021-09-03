@@ -65,8 +65,19 @@ class CardOut:
     time_created: int
 
 
+@dataclass
+class ReviewOut:
+    id: int
+    card: CardOut
+    time_created: int
+    time_completed: int
+    review_status: str
+    correct: int
+
+
 DECKS, NOTES = [], []
 CARDS: List[CardOut] = []
+REVIEWS: List[ReviewOut] = []
 
 
 app = Flask(__name__)
@@ -120,6 +131,24 @@ def get_cards():
     return jsonify([asdict(x) for x in CARDS])
 
 
+@app.route("/reviews", methods=["GET"])
+def get_reviews():
+    return jsonify([asdict(x) for x in REVIEWS])
+
+
+# Actions that should be behind worker
+@app.route("/generate_reviews", methods=["GET"])
+def generate_reviews():
+    global REVIEWS
+    REVIEWS = []
+    for i, card in enumerate(CARDS):
+        review = ReviewOut(
+            id=i + 1, card=card, time_created=timestamp(), time_completed=-1, review_status="not_reviewed", correct=-1
+        )
+        REVIEWS.append(review)
+    return f"Reviews Generated {len(REVIEWS)}"
+
+
 # Actual CRUD
 def add_new_deck(new_deck: DeckIn) -> DeckOut:
     id = len(DECKS) + 1
@@ -140,6 +169,7 @@ def add_new_card(new_card: CardIn):
     card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp())
     CARDS.append(card)
     return
+
 
 # Utils
 def timestamp() -> int:
