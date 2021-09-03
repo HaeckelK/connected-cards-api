@@ -1,5 +1,6 @@
 from dataclasses import dataclass, asdict
 from typing import List
+import time
 
 from flask import Flask, jsonify, request
 
@@ -14,6 +15,7 @@ class DeckOut:
     id: int
     name: str
     cards_total: int
+    time_created: int
 
 
 @dataclass
@@ -29,6 +31,7 @@ class NoteOut:
     deck_id: int
     text_front: str
     text_back: str
+    time_created: int
 
 
 # TODO remove question and answer, these are only to be stored in Note
@@ -58,6 +61,8 @@ class CardOut:
     direction: str
     question: str
     answer: str
+    status: str
+    time_created: int
 
 
 DECKS, NOTES = [], []
@@ -118,20 +123,24 @@ def get_cards():
 # Actual CRUD
 def add_new_deck(new_deck: DeckIn) -> DeckOut:
     id = len(DECKS) + 1
-    deck = DeckOut(id=id, name=new_deck.name, cards_total=0)
+    deck = DeckOut(id=id, name=new_deck.name, cards_total=0, time_created=timestamp())
     DECKS.append(deck)
     return deck
 
 
 def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
-    note = NoteOut(**asdict(new_note), id=id)
+    note = NoteOut(**asdict(new_note), id=id, time_created=timestamp())
     NOTES.append(note)
     return note
 
 
 def add_new_card(new_card: CardIn):
     id = len(CARDS) + 1
-    card = CardOut(id=id, **asdict(new_card))
+    card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp())
     CARDS.append(card)
     return
+
+# Utils
+def timestamp() -> int:
+    return int(time.time())
