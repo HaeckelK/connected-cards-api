@@ -3,6 +3,7 @@ from typing import List
 import time
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 
 @dataclass
@@ -82,6 +83,8 @@ REVIEWS: List[ReviewOut] = []
 
 
 app = Flask(__name__)
+# TODO limit to correct origin etc
+CORS(app)
 
 
 @app.route("/decks", methods=["GET"])

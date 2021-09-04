@@ -61,17 +61,5 @@ def create_note():
     return redirect(request.referrer)
 
 
-@app.route("/mark_correct/<int:id>")
-def mark_correct(id: int) -> str:
-    requests.get(f"http://127.0.0.1:5000/reviews/mark_correct/{id}")
-    return redirect(url_for("decks"))
-
-
-@app.route("/mark_incorrect/<int:id>")
-def mark_incorrect(id: int) -> str:
-    requests.get(f"http://127.0.0.1:5000/reviews/mark_incorrect/{id}")
-    return redirect(url_for("decks"))
-
-
 if __name__ == "__main__":
     app.run(port=5001, debug=True, host="0.0.0.0")

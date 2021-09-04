@@ -1,6 +1,6 @@
 <html>
     <head>
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     </head>
     <body>
         <h1><a href="/">Connected Cards App</a></h1>
@@ -57,14 +57,22 @@
               <tr>
                 <td>{{ review.card.question}}</td>
                 <td>{{ review.card.answer}}</td>
-                <!-- ajax needed here -->
-                <td><a href="/mark_correct/{{review.id}}">Correct</a> 
-                  <a href="/mark_incorrect/{{review.id}}">Incorrect</a>
+                <td>
+                  <button type="button" onclick="httpGet('http://127.0.0.1:5000/reviews/mark_correct/{{ review.id}}')">Correct</button>
+                  <button type="button" onclick="httpGet('http://127.0.0.1:5000/reviews/mark_incorrect/{{ review.id}}')">Incorrect</button>
               </tr>
               {% endfor %}
             </tbody>
           </table>
 
-
+    <script>
+      function httpGet(url) {
+        $.ajax({
+          type: 'GET',
+          url: url
+        });
+        location.reload();
+      }
+    </script>
     </body>
 </html>
