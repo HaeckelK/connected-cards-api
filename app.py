@@ -149,10 +149,14 @@ def get_cards():
 
 @app.route("/reviews", methods=["GET"])
 def get_reviews():
+    # TODO check this isn't amending REVIEWs
+    reviews = [x for x in REVIEWS]
     if int(request.args.get("due", default=0)) == 1:
-        return jsonify([asdict(x) for x in REVIEWS if x.review_status == "not_reviewed"])
-    else:
-        return jsonify([asdict(x) for x in REVIEWS])
+        reviews = [x for x in reviews if x.review_status == "not_reviewed"]
+    deck_id = request.args.get("deck", None)
+    if deck_id:
+        reviews = [x for x in reviews if int(x.card.deck_id) == int(deck_id)]
+    return jsonify([asdict(x) for x in reviews])
 
 
 @app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
