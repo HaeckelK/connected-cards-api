@@ -6,7 +6,7 @@ from app import DeckOut, NoteOut
 
 
 def main():
-    base_url = "http://localhost:5000/"
+    base_url = "http://127.0.0.1:5000/"
 
     # Wipe existing data
     requests.get(base_url + "wipe")
