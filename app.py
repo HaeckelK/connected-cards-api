@@ -136,6 +136,26 @@ def get_reviews():
     return jsonify([asdict(x) for x in REVIEWS])
 
 
+@app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
+def mark_review_correct(id: int):
+    for review in REVIEWS:
+        if review.id == id:
+            review.correct = True
+            review.time_completed = timestamp()
+            review.review_status = "reviewed"
+    return
+
+
+@app.route("/reviews/mark_incorrect/<int:id>", methods=["GET"])
+def mark_review_incorrect(id: int):
+    for review in REVIEWS:
+        if review.id == id:
+            review.correct = False
+            review.time_completed = timestamp()
+            review.review_status = "reviewed"
+    return
+
+
 # Actions that should be behind worker
 @app.route("/generate_reviews", methods=["GET"])
 def generate_reviews():
@@ -147,6 +167,16 @@ def generate_reviews():
         )
         REVIEWS.append(review)
     return f"Reviews Generated {len(REVIEWS)}"
+
+
+@app.route("/wipe", methods=["GET"])
+def wipe_data():
+    global DECKS, CARDS, REVIEWS, NOTES
+    DECKS = []
+    CARDS = []
+    NOTES = []
+    REVIEWS = []
+    return "wiped"
 
 
 # Actual CRUD
