@@ -16,6 +16,7 @@ class DeckOut:
     name: str
     cards_total: int
     time_created: int
+    count_reviews_due: int
 
 
 @dataclass
@@ -88,6 +89,14 @@ def get_decks():
     return jsonify([asdict(x) for x in DECKS])
 
 
+@app.route("/decks/<int:id>", methods=["GET"])
+def get_deck_by_id(id: int):
+    for deck in DECKS:
+        if deck.id == id:
+            return jsonify(asdict(deck))
+    return f"Deck not found for id: {id}", 400
+
+
 @app.route("/decks", methods=["POST"])
 def create_deck():
     name = request.form["name"]
@@ -98,7 +107,11 @@ def create_deck():
 
 @app.route("/notes", methods=["GET"])
 def get_notes():
-    return jsonify([asdict(x) for x in NOTES])
+    deck_id = request.args.get("deck", None)
+    if deck_id:
+        return jsonify([asdict(x) for x in NOTES if int(x.deck_id) == int(deck_id)])
+    else:
+        return jsonify([asdict(x) for x in NOTES])
 
 
 @app.route("/notes", methods=["POST"])
@@ -185,7 +198,7 @@ def wipe_data():
 # Actual CRUD
 def add_new_deck(new_deck: DeckIn) -> DeckOut:
     id = len(DECKS) + 1
-    deck = DeckOut(id=id, name=new_deck.name, cards_total=0, time_created=timestamp())
+    deck = DeckOut(id=id, name=new_deck.name, cards_total=0, time_created=timestamp(), count_reviews_due=123)
     DECKS.append(deck)
     return deck
 
