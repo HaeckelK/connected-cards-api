@@ -45,6 +45,26 @@
             </tbody>
             </table>
 
+          <h3>Reviews</h3>
+          <table>
+            <thead>
+              <th>Question</th>
+              <th>Answer</th>
+              <th>Actions</th>
+            </thead>
+            <tbody>
+              {% for review in reviews %}
+              <tr>
+                <td>{{ review.card.question}}</td>
+                <td>{{ review.card.answer}}</td>
+                <!-- ajax needed here -->
+                <td><a href="/mark_correct/{{review.id}}">Correct</a> 
+                  <a href="/mark_incorrect/{{review.id}}">Incorrect</a>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
 
     </body>
 </html>

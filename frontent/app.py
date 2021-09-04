@@ -37,7 +37,11 @@ def deck(id: int) -> str:
 
     response = requests.get(API_URL + f"notes?deck={id}")
     notes = json.loads(response.content)
-    return render_template("deck.html", deck=deck, notes=notes)
+
+    response = requests.get(API_URL + f"reviews?due=1&deck={id}")
+    reviews = json.loads(response.content)
+
+    return render_template("deck.html", deck=deck, notes=notes, reviews=reviews)
 
 
 @app.route("/create_note")
@@ -55,6 +59,18 @@ def create_note():
     if response.status_code != 200:
         pass
     return redirect(request.referrer)
+
+
+@app.route("/mark_correct/<int:id>")
+def mark_correct(id: int) -> str:
+    requests.get(f"http://127.0.0.1:5000/reviews/mark_correct/{id}")
+    return redirect(url_for("decks"))
+
+
+@app.route("/mark_incorrect/<int:id>")
+def mark_incorrect(id: int) -> str:
+    requests.get(f"http://127.0.0.1:5000/reviews/mark_incorrect/{id}")
+    return redirect(url_for("decks"))
 
 
 if __name__ == "__main__":

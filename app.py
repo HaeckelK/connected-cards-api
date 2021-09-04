@@ -159,7 +159,7 @@ def mark_review_correct(id: int):
             review.correct = True
             review.time_completed = timestamp()
             review.review_status = "reviewed"
-    return
+    return "done"
 
 
 @app.route("/reviews/mark_incorrect/<int:id>", methods=["GET"])
@@ -169,7 +169,7 @@ def mark_review_incorrect(id: int):
             review.correct = False
             review.time_completed = timestamp()
             review.review_status = "reviewed"
-    return
+    return "done"
 
 
 # Actions that should be behind worker
