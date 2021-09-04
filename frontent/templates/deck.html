@@ -48,18 +48,19 @@
           <h3>Reviews</h3>
           <table>
             <thead>
+              <th>Actions</th>
               <th>Question</th>
               <th>Answer</th>
-              <th>Actions</th>
             </thead>
             <tbody>
               {% for review in reviews %}
               <tr>
-                <td>{{ review.card.question}}</td>
-                <td>{{ review.card.answer}}</td>
                 <td>
                   <button type="button" onclick="httpGet('http://127.0.0.1:5000/reviews/mark_correct/{{ review.id}}')">Correct</button>
                   <button type="button" onclick="httpGet('http://127.0.0.1:5000/reviews/mark_incorrect/{{ review.id}}')">Incorrect</button>
+                  <button type="button" onclick='show("#answer_{{review.id}}")'>Reveal</button>
+                  <td>{{ review.card.question}}</td>
+                  <td id="answer_{{review.id}}" hidden>{{ review.card.answer}}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -72,6 +73,9 @@
           url: url
         });
         location.reload();
+      }
+      function show(name) {
+        $( name ).show();
       }
     </script>
     </body>
