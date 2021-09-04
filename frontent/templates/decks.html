@@ -1,0 +1,16 @@
+<html>
+    <head>
+
+    </head>
+    <body>
+        <h1><a href="/">Connected Cards App</a></h1>
+        <h2>Decks</h2>
+        {% for deck in decks %}
+        <h3><a href="/deck/{{ deck.id }}">{{ deck.name }}</a></h3>
+        <p>Reviews Due: {{ deck.count_reviews_due }} </p>
+        {% endfor%}
+        <a href="/create_deck">Create Deck</a>
+        <a href="http://127.0.0.1:5000/generate_reviews">Generate Reviews</a>
+
+    </body>
+</html>

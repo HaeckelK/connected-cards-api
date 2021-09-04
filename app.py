@@ -3,6 +3,7 @@ from typing import List
 import time
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 
 @dataclass
@@ -16,6 +17,7 @@ class DeckOut:
     name: str
     cards_total: int
     time_created: int
+    count_reviews_due: int
 
 
 @dataclass
@@ -81,11 +83,21 @@ REVIEWS: List[ReviewOut] = []
 
 
 app = Flask(__name__)
+# TODO limit to correct origin etc
+CORS(app)
 
 
 @app.route("/decks", methods=["GET"])
 def get_decks():
     return jsonify([asdict(x) for x in DECKS])
+
+
+@app.route("/decks/<int:id>", methods=["GET"])
+def get_deck_by_id(id: int):
+    for deck in DECKS:
+        if deck.id == id:
+            return jsonify(asdict(deck))
+    return f"Deck not found for id: {id}", 400
 
 
 @app.route("/decks", methods=["POST"])
@@ -98,7 +110,11 @@ def create_deck():
 
 @app.route("/notes", methods=["GET"])
 def get_notes():
-    return jsonify([asdict(x) for x in NOTES])
+    deck_id = request.args.get("deck", None)
+    if deck_id:
+        return jsonify([asdict(x) for x in NOTES if int(x.deck_id) == int(deck_id)])
+    else:
+        return jsonify([asdict(x) for x in NOTES])
 
 
 @app.route("/notes", methods=["POST"])
@@ -133,10 +149,14 @@ def get_cards():
 
 @app.route("/reviews", methods=["GET"])
 def get_reviews():
+    # TODO check this isn't amending REVIEWs
+    reviews = [x for x in REVIEWS]
     if int(request.args.get("due", default=0)) == 1:
-        return jsonify([asdict(x) for x in REVIEWS if x.review_status == "not_reviewed"])
-    else:
-        return jsonify([asdict(x) for x in REVIEWS])
+        reviews = [x for x in reviews if x.review_status == "not_reviewed"]
+    deck_id = request.args.get("deck", None)
+    if deck_id:
+        reviews = [x for x in reviews if int(x.card.deck_id) == int(deck_id)]
+    return jsonify([asdict(x) for x in reviews])
 
 
 @app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
@@ -146,7 +166,7 @@ def mark_review_correct(id: int):
             review.correct = True
             review.time_completed = timestamp()
             review.review_status = "reviewed"
-    return
+    return "done"
 
 
 @app.route("/reviews/mark_incorrect/<int:id>", methods=["GET"])
@@ -156,7 +176,7 @@ def mark_review_incorrect(id: int):
             review.correct = False
             review.time_completed = timestamp()
             review.review_status = "reviewed"
-    return
+    return "done"
 
 
 # Actions that should be behind worker
@@ -185,7 +205,7 @@ def wipe_data():
 # Actual CRUD
 def add_new_deck(new_deck: DeckIn) -> DeckOut:
     id = len(DECKS) + 1
-    deck = DeckOut(id=id, name=new_deck.name, cards_total=0, time_created=timestamp())
+    deck = DeckOut(id=id, name=new_deck.name, cards_total=0, time_created=timestamp(), count_reviews_due=123)
     DECKS.append(deck)
     return deck
 

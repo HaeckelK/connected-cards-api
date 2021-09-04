@@ -1,0 +1,82 @@
+<html>
+    <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <h1><a href="/">Connected Cards App</a></h1>
+        <h2>Deck: {{ deck.name }}</h2>
+        <p>Reviews Due: {{ deck.count_reviews_due }} </p>
+        <p>Total Notes: {{ deck.notes_total }}</p>
+        <p>Total Cards: {{ deck.cards_total }}</p>
+
+        <h3>Create Note</h3>
+        <form action="/create_note">
+            <label for="front">Front:</label><br>
+            <input type="text" id="front" name="front"><br>
+            <label for="back">Back:</label><br>
+            <input type="text" id="back" name="back"><br>
+            <input type="hidden" id="deck" name="deck" value={{ deck.id }}>
+            <input type="submit" style="visibility: hidden;" />
+        </form>
+
+        <h3>Notes</h3>
+        <style type="text/css">
+            .tg  {border-collapse:collapse;border-color:#9ABAD9;border-spacing:0;}
+            .tg td{background-color:#EBF5FF;border-color:#9ABAD9;border-style:solid;border-width:0px;color:#444;
+              font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;word-break:normal;}
+            .tg th{background-color:#409cff;border-color:#9ABAD9;border-style:solid;border-width:0px;color:#fff;
+              font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+            .tg .tg-0pky{border-color:inherit;text-align:left;vertical-align:top}
+            </style>
+            <table class="tg">
+            <thead>
+              <tr>
+                <th class="tg-0pky">Front</th>
+                <th class="tg-0pky">Back</th>
+              </tr>
+            </thead>
+            <tbody>
+                {% for note in notes %}
+                <tr>
+                    <td class="tg-0pky">{{ note.text_front }}</td>
+                    <td class="tg-0pky">{{ note.text_back }}</td>
+                  </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+
+          <h3>Reviews</h3>
+          <table>
+            <thead>
+              <th>Actions</th>
+              <th>Question</th>
+              <th>Answer</th>
+            </thead>
+            <tbody>
+              {% for review in reviews %}
+              <tr>
+                <td>
+                  <button type="button" onclick="httpGet('http://127.0.0.1:5000/reviews/mark_correct/{{ review.id}}')">Correct</button>
+                  <button type="button" onclick="httpGet('http://127.0.0.1:5000/reviews/mark_incorrect/{{ review.id}}')">Incorrect</button>
+                  <button type="button" onclick='show("#answer_{{review.id}}")'>Reveal</button>
+                  <td>{{ review.card.question}}</td>
+                  <td id="answer_{{review.id}}" hidden>{{ review.card.answer}}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+    <script>
+      function httpGet(url) {
+        $.ajax({
+          type: 'GET',
+          url: url
+        });
+        location.reload();
+      }
+      function show(name) {
+        $( name ).show();
+      }
+    </script>
+    </body>
+</html>
