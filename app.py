@@ -1,5 +1,6 @@
 from dataclasses import dataclass, asdict
 from typing import List
+import time
 
 from flask import Flask, jsonify, request
 
@@ -14,6 +15,7 @@ class DeckOut:
     id: int
     name: str
     cards_total: int
+    time_created: int
 
 
 @dataclass
@@ -29,6 +31,7 @@ class NoteOut:
     deck_id: int
     text_front: str
     text_back: str
+    time_created: int
 
 
 # TODO remove question and answer, these are only to be stored in Note
@@ -58,10 +61,23 @@ class CardOut:
     direction: str
     question: str
     answer: str
+    status: str
+    time_created: int
+
+
+@dataclass
+class ReviewOut:
+    id: int
+    card: CardOut
+    time_created: int
+    time_completed: int
+    review_status: str
+    correct: int
 
 
 DECKS, NOTES = [], []
 CARDS: List[CardOut] = []
+REVIEWS: List[ReviewOut] = []
 
 
 app = Flask(__name__)
@@ -115,23 +131,79 @@ def get_cards():
     return jsonify([asdict(x) for x in CARDS])
 
 
+@app.route("/reviews", methods=["GET"])
+def get_reviews():
+    if int(request.args.get("due", default=0)) == 1:
+        return jsonify([asdict(x) for x in REVIEWS if x.review_status == "not_reviewed"])
+    else:
+        return jsonify([asdict(x) for x in REVIEWS])
+
+
+@app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
+def mark_review_correct(id: int):
+    for review in REVIEWS:
+        if review.id == id:
+            review.correct = True
+            review.time_completed = timestamp()
+            review.review_status = "reviewed"
+    return
+
+
+@app.route("/reviews/mark_incorrect/<int:id>", methods=["GET"])
+def mark_review_incorrect(id: int):
+    for review in REVIEWS:
+        if review.id == id:
+            review.correct = False
+            review.time_completed = timestamp()
+            review.review_status = "reviewed"
+    return
+
+
+# Actions that should be behind worker
+@app.route("/generate_reviews", methods=["GET"])
+def generate_reviews():
+    global REVIEWS
+    REVIEWS = []
+    for i, card in enumerate(CARDS):
+        review = ReviewOut(
+            id=i + 1, card=card, time_created=timestamp(), time_completed=-1, review_status="not_reviewed", correct=-1
+        )
+        REVIEWS.append(review)
+    return f"Reviews Generated {len(REVIEWS)}"
+
+
+@app.route("/wipe", methods=["GET"])
+def wipe_data():
+    global DECKS, CARDS, REVIEWS, NOTES
+    DECKS = []
+    CARDS = []
+    NOTES = []
+    REVIEWS = []
+    return "wiped"
+
+
 # Actual CRUD
 def add_new_deck(new_deck: DeckIn) -> DeckOut:
     id = len(DECKS) + 1
-    deck = DeckOut(id=id, name=new_deck.name, cards_total=0)
+    deck = DeckOut(id=id, name=new_deck.name, cards_total=0, time_created=timestamp())
     DECKS.append(deck)
     return deck
 
 
 def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
-    note = NoteOut(**asdict(new_note), id=id)
+    note = NoteOut(**asdict(new_note), id=id, time_created=timestamp())
     NOTES.append(note)
     return note
 
 
 def add_new_card(new_card: CardIn):
     id = len(CARDS) + 1
-    card = CardOut(id=id, **asdict(new_card))
+    card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp())
     CARDS.append(card)
     return
+
+
+# Utils
+def timestamp() -> int:
+    return int(time.time())
