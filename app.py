@@ -133,7 +133,10 @@ def get_cards():
 
 @app.route("/reviews", methods=["GET"])
 def get_reviews():
-    return jsonify([asdict(x) for x in REVIEWS])
+    if int(request.args.get("due", default=0)) == 1:
+        return jsonify([asdict(x) for x in REVIEWS if x.review_status == "not_reviewed"])
+    else:
+        return jsonify([asdict(x) for x in REVIEWS])
 
 
 @app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
