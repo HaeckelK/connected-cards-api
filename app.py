@@ -1,9 +1,10 @@
 from dataclasses import dataclass, asdict
 from typing import List, Dict
-import time
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+
+from utils import timestamp
 
 
 @dataclass
@@ -274,8 +275,3 @@ def get_count_notes_by_deck() -> Dict[int, int]:
         except  KeyError:
             count[card.deck_id] = 1
     return count
-
-
-# Utils
-def timestamp() -> int:
-    return int(time.time())
