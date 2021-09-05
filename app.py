@@ -1,85 +1,12 @@
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 from typing import List, Dict
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from utils import timestamp
-
-
-@dataclass
-class DeckIn:
-    name: str
-
-
-@dataclass
-class DeckOut:
-    id: int
-    name: str
-    notes_total: int
-    cards_total: int
-    time_created: int
-    count_reviews_due: int
-    count_new_cards: int
-
-
-@dataclass
-class NoteIn:
-    deck_id: int
-    text_front: str
-    text_back: str
-
-
-@dataclass
-class NoteOut:
-    id: int
-    deck_id: int
-    text_front: str
-    text_back: str
-    time_created: int
-
-
-# TODO remove question and answer, these are only to be stored in Note
-# e.g. what happens when Note content gets edited? You have to edit all the cards too with this current setup.
-@dataclass
-class CardIn:
-    note_id: int
-    direction: str
-    # TODO remove all below
-    deck_id: int
-    question: str
-    answer: str
-
-
-# @dataclass
-# class CardModel:
-#     id: str
-#     note_id: int
-#     direction: str
-
-
-@dataclass
-class CardOut:
-    id: int
-    deck_id: int
-    note_id: int
-    direction: str
-    question: str
-    answer: str
-    status: str
-    time_created: int
-    time_latest_review: int
-    current_review_interval: int
-
-
-@dataclass
-class ReviewOut:
-    id: int
-    card: CardOut
-    time_created: int
-    time_completed: int
-    review_status: str
-    correct: int
+from scheduler import Scheduler
+from models import DeckIn, DeckOut, NoteIn, NoteOut, CardIn, CardOut, ReviewOut
 
 
 DECKS, NOTES = [], []
@@ -90,6 +17,10 @@ REVIEWS: List[ReviewOut] = []
 app = Flask(__name__)
 # TODO limit to correct origin etc
 CORS(app)
+
+scheduler = Scheduler(new_cards_limit=100,
+                      total_cards_limit=100,
+                      allow_cards_from_same_note=False)
 
 
 @app.route("/decks", methods=["GET"])
@@ -195,12 +126,7 @@ def mark_review_incorrect(id: int):
 @app.route("/generate_reviews", methods=["GET"])
 def generate_reviews():
     global REVIEWS
-    REVIEWS = []
-    for i, card in enumerate(CARDS):
-        review = ReviewOut(
-            id=i + 1, card=card, time_created=timestamp(), time_completed=-1, review_status="not_reviewed", correct=-1
-        )
-        REVIEWS.append(review)
+    REVIEWS = scheduler.create_reviews(reviews=REVIEWS, cards=CARDS)
     return f"Reviews Generated {len(REVIEWS)}"
 
 
@@ -211,6 +137,15 @@ def wipe_data():
     CARDS = []
     NOTES = []
     REVIEWS = []
+    return "wiped"
+
+
+@app.route("/wipe/reviews", methods=["GET"])
+def wipe_reviews():
+    global REVIEWS, CARDS
+    REVIEWS = []
+    for card in CARDS:
+        card.status = "new"
     return "wiped"
 
 
