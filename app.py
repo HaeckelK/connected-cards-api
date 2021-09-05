@@ -90,10 +90,6 @@ CORS(app)
 
 @app.route("/decks", methods=["GET"])
 def get_decks():
-    card_count = get_count_cards_by_deck()
-    for deck in DECKS:
-        deck.cards_total = card_count.get(deck.id, 0)
-
     return jsonify([asdict(x) for x in DECKS])
 
 
@@ -226,6 +222,10 @@ def add_new_card(new_card: CardIn):
     id = len(CARDS) + 1
     card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp())
     CARDS.append(card)
+    # Update deck stats
+    card_count = get_count_cards_by_deck()
+    for deck in DECKS:
+        deck.cards_total = card_count.get(deck.id, 0)
     return
 
 # Under the hood data store work
