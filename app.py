@@ -18,7 +18,7 @@ app = Flask(__name__)
 # TODO limit to correct origin etc
 CORS(app)
 
-scheduler = Scheduler()
+scheduler = Scheduler(new_cards_limit=5)
 
 
 @app.route("/decks", methods=["GET"])
@@ -140,8 +140,10 @@ def wipe_data():
 
 @app.route("/wipe/reviews", methods=["GET"])
 def wipe_reviews():
-    global REVIEWS
+    global REVIEWS, CARDS
     REVIEWS = []
+    for card in CARDS:
+        card.status = "new"
     return "wiped"
 
 
