@@ -6,9 +6,10 @@ from models import ReviewOut
 
 
 class Scheduler:
-    def __init__(self, new_cards_limit: int, allow_cards_from_same_note: bool) -> None:
+    def __init__(self, new_cards_limit: int, total_cards_limit: int, allow_cards_from_same_note: bool) -> None:
         self.new_cards_limit = new_cards_limit
         self.allow_cards_from_same_note = allow_cards_from_same_note
+        self.total_cards_limit = total_cards_limit
         return
 
     def create_reviews(self, reviews, cards) -> List[ReviewOut]:
@@ -31,6 +32,10 @@ class Scheduler:
             # Limit number of new cards that can be added to pool
             if new_count > self.new_cards_limit:
                 continue
+
+            # Limit total number of cards
+            if len(pool) >= self.total_cards_limit:
+                break
 
             note_ids.add(card.note_id)
             pool.append(card)

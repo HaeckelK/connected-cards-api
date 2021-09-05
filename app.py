@@ -18,7 +18,8 @@ app = Flask(__name__)
 # TODO limit to correct origin etc
 CORS(app)
 
-scheduler = Scheduler(new_cards_limit=5,
+scheduler = Scheduler(new_cards_limit=100,
+                      total_cards_limit=100,
                       allow_cards_from_same_note=False)
 
 
