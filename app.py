@@ -214,6 +214,13 @@ def wipe_data():
     return "wiped"
 
 
+@app.route("/wipe/reviews", methods=["GET"])
+def wipe_reviews():
+    global REVIEWS
+    REVIEWS = []
+    return "wiped"
+
+
 # Actual CRUD
 def add_new_deck(new_deck: DeckIn) -> DeckOut:
     id = len(DECKS) + 1
