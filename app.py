@@ -123,8 +123,9 @@ def mark_review_incorrect(id: int):
 # Actions that should be behind worker
 @app.route("/generate_reviews", methods=["GET"])
 def generate_reviews():
-    num_reviews = scheduler.create_reviews(reviews=REVIEWS, cards=CARDS)
-    return f"Reviews Generated {len(num_reviews)}"
+    global REVIEWS
+    REVIEWS = scheduler.create_reviews(reviews=REVIEWS, cards=CARDS)
+    return f"Reviews Generated {len(REVIEWS)}"
 
 
 @app.route("/wipe", methods=["GET"])
