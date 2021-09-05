@@ -14,7 +14,9 @@ class Scheduler:
 
     def create_reviews(self, reviews, cards) -> List[ReviewOut]:
         # TODO should create views by deck
-        reviews = []
+
+        # Remove any incomplete reviews
+        reviews = [x for x in reviews if x.review_status != "not_reviewed"]
 
         pool = []
         # TODO what order? Random? Or Order addded
