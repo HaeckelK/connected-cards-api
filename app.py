@@ -1,5 +1,5 @@
 from dataclasses import dataclass, asdict
-from typing import List
+from typing import List, Dict
 import time
 
 from flask import Flask, jsonify, request
@@ -15,6 +15,7 @@ class DeckIn:
 class DeckOut:
     id: int
     name: str
+    notes_total: int
     cards_total: int
     time_created: int
     count_reviews_due: int
@@ -89,6 +90,10 @@ CORS(app)
 
 @app.route("/decks", methods=["GET"])
 def get_decks():
+    card_count = get_count_cards_by_deck()
+    for deck in DECKS:
+        deck.cards_total = card_count.get(deck.id, 0)
+
     return jsonify([asdict(x) for x in DECKS])
 
 
@@ -205,7 +210,7 @@ def wipe_data():
 # Actual CRUD
 def add_new_deck(new_deck: DeckIn) -> DeckOut:
     id = len(DECKS) + 1
-    deck = DeckOut(id=id, name=new_deck.name, cards_total=0, time_created=timestamp(), count_reviews_due=123)
+    deck = DeckOut(id=id, name=new_deck.name, notes_total=0, cards_total=0, time_created=timestamp(), count_reviews_due=0)
     DECKS.append(deck)
     return deck
 
@@ -222,6 +227,16 @@ def add_new_card(new_card: CardIn):
     card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp())
     CARDS.append(card)
     return
+
+# Under the hood data store work
+def get_count_cards_by_deck() -> Dict[int, int]:
+    count = {}
+    for card in CARDS:
+        try:
+            count[card.deck_id] += 1
+        except  KeyError:
+            count[card.deck_id] = 1
+    return count
 
 
 # Utils
