@@ -67,6 +67,8 @@ class CardOut:
     answer: str
     status: str
     time_created: int
+    time_latest_review: int
+    current_review_interval: int
 
 
 @dataclass
@@ -232,7 +234,7 @@ def add_new_note(new_note: NoteIn) -> NoteOut:
 
 def add_new_card(new_card: CardIn):
     id = len(CARDS) + 1
-    card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp())
+    card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp(), time_latest_review=-1, current_review_interval=-1)
     CARDS.append(card)
     # Update deck stats
     card_count = get_count_cards_by_deck()
