@@ -19,6 +19,7 @@ class DeckOut:
     cards_total: int
     time_created: int
     count_reviews_due: int
+    count_new_cards: int
 
 
 @dataclass
@@ -90,6 +91,11 @@ CORS(app)
 
 @app.route("/decks", methods=["GET"])
 def get_decks():
+    # TODO should work this out after reviews?
+    # Update deck stats
+    card_count = get_count_cards_by_deck(status="new")
+    for deck in DECKS:
+        deck.count_new_cards = card_count.get(deck.id, 0)
     return jsonify([asdict(x) for x in DECKS])
 
 
@@ -167,6 +173,7 @@ def mark_review_correct(id: int):
             review.correct = True
             review.time_completed = timestamp()
             review.review_status = "reviewed"
+            change_card_status(review.card.id, status="seen")
     return "done"
 
 
@@ -177,6 +184,7 @@ def mark_review_incorrect(id: int):
             review.correct = False
             review.time_completed = timestamp()
             review.review_status = "reviewed"
+            change_card_status(review.card.id, status="seen")
     return "done"
 
 
@@ -206,7 +214,7 @@ def wipe_data():
 # Actual CRUD
 def add_new_deck(new_deck: DeckIn) -> DeckOut:
     id = len(DECKS) + 1
-    deck = DeckOut(id=id, name=new_deck.name, notes_total=0, cards_total=0, time_created=timestamp(), count_reviews_due=0)
+    deck = DeckOut(id=id, name=new_deck.name, notes_total=0, cards_total=0, time_created=timestamp(), count_reviews_due=0, count_new_cards=0)
     DECKS.append(deck)
     return deck
 
@@ -232,10 +240,23 @@ def add_new_card(new_card: CardIn):
         deck.cards_total = card_count.get(deck.id, 0)
     return
 
-# Under the hood data store work
-def get_count_cards_by_deck() -> Dict[int, int]:
-    count = {}
+
+def change_card_status(id: int, status: str):
     for card in CARDS:
+        if int(card.id) == int(id):
+            card.status = status
+            return
+    return
+
+
+# Under the hood data store work
+def get_count_cards_by_deck(status="all") -> Dict[int, int]:
+    count = {}
+    if status == "all":
+        cards = [x for x in CARDS]
+    else:
+        cards = [x for x in CARDS if x.status == status]
+    for card in cards:
         try:
             count[card.deck_id] += 1
         except  KeyError:
