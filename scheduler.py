@@ -6,8 +6,9 @@ from models import ReviewOut
 
 
 class Scheduler:
-    def __init__(self, new_cards_limit: int) -> None:
+    def __init__(self, new_cards_limit: int, allow_cards_from_same_note: bool) -> None:
         self.new_cards_limit = new_cards_limit
+        self.allow_cards_from_same_note = allow_cards_from_same_note
         return
 
     def create_reviews(self, reviews, cards) -> List[ReviewOut]:
@@ -20,8 +21,7 @@ class Scheduler:
         note_ids = set()
         for card in cards:
             # Don't allow cards from the same note to be reviewed on same day
-            # TODO add boolean flag
-            if card.note_id in note_ids:
+            if (card.note_id in note_ids) and (self.allow_cards_from_same_note is False):
                 continue
 
             # Track number of new cards added to pool
