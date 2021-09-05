@@ -215,6 +215,10 @@ def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
     note = NoteOut(**asdict(new_note), id=id, time_created=timestamp())
     NOTES.append(note)
+    # Update deck stats
+    card_count = get_count_notes_by_deck()
+    for deck in DECKS:
+        deck.notes_total = card_count.get(deck.id, 0)
     return note
 
 
@@ -232,6 +236,16 @@ def add_new_card(new_card: CardIn):
 def get_count_cards_by_deck() -> Dict[int, int]:
     count = {}
     for card in CARDS:
+        try:
+            count[card.deck_id] += 1
+        except  KeyError:
+            count[card.deck_id] = 1
+    return count
+
+
+def get_count_notes_by_deck() -> Dict[int, int]:
+    count = {}
+    for card in NOTES:
         try:
             count[card.deck_id] += 1
         except  KeyError:
