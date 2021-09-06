@@ -38,7 +38,7 @@ def test_get_decks_empty(clean_data):
 
 
 def test_get_decks_not_empty(some_data):
-    # Given a dataset which contains a deck
+    # Given a dataset which contains multiple decks
     # When GET / decks
     response = requests.get(BASE_URL + "/decks")
     # Then ok status
@@ -48,6 +48,26 @@ def test_get_decks_not_empty(some_data):
     # Then each item returned is of type DeckOut
     for item in json.loads(response.content):
         DeckOut(**item)
+
+
+def test_get_decks_by_id_exists(some_data):
+    # Given a dataset which contains multiple decks
+    # When GET a deck id that exists
+    response = requests.get(BASE_URL + "/decks/1")
+    # Then ok status
+    assert response.status_code == 200
+    # Then item returned is of type DeckOut
+    DeckOut(**json.loads(response.content))
+
+
+def test_get_decks_by_id_not_exists(some_data):
+    # Given a dataset which contains multiple decks
+    # When GET a deck id that does not exist
+    response = requests.get(BASE_URL + "/decks/99")
+    # Then bad status
+    assert response.status_code == 400
+    # Then error message received
+    assert response.text == "Deck not found for id: 99"
 
 
 def test_post_decks_empty(clean_data):
