@@ -8,6 +8,8 @@ from utils import timestamp
 from scheduler import Scheduler
 from models import DeckIn, DeckOut, NoteIn, NoteOut, CardIn, CardOut, ReviewOut
 
+MINIMUM_INTERVAL = 86400
+
 
 DECKS, NOTES = [], []
 CARDS: List[CardOut] = []
@@ -20,7 +22,7 @@ CORS(app)
 
 scheduler = Scheduler(new_cards_limit=100,
                       total_cards_limit=100,
-                      allow_cards_from_same_note=False)
+                      allow_cards_from_same_note=True)
 
 
 @app.route("/decks", methods=["GET"])
@@ -102,12 +104,19 @@ def get_reviews():
 
 @app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
 def mark_review_correct(id: int):
+    # TODO DRY see mark_review_incorrect
     for review in REVIEWS:
         if review.id == id:
             review.correct = True
             review.time_completed = timestamp()
             review.review_status = "reviewed"
             change_card_status(review.card.id, status="seen")
+            review.card.time_latest_review = scheduler.review_time
+            # TODO what's the growth rate - need some class for managing that
+            if review.card.current_review_interval == -1:
+                review.card.current_review_interval = MINIMUM_INTERVAL
+            else:
+                review.card.current_review_interval *= 2
     return "done"
 
 
@@ -119,6 +128,7 @@ def mark_review_incorrect(id: int):
             review.time_completed = timestamp()
             review.review_status = "reviewed"
             change_card_status(review.card.id, status="seen")
+            review.card.time_latest_review = scheduler.review_time
     return "done"
 
 
@@ -147,6 +157,12 @@ def wipe_reviews():
     for card in CARDS:
         card.status = "new"
     return "wiped"
+
+
+@app.route("/increment_scheduler", methods=["GET"])
+def increment_scheduler():
+    scheduler.review_time += 86400
+    return f"New time: {scheduler.review_time}"
 
 
 # Actual CRUD
