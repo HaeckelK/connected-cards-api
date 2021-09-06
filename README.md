@@ -3,6 +3,13 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![python](https://img.shields.io/badge/python-3.7-blue.svg)]()
 
+[](./assets/banner.png)
+<img
+  src="https://github.com/HaeckelK/connected-cards-api/tree/main/frontend/assets/banner.png"
+  alt="Connected Cards"
+  width="500"
+/>
+
 Backend API for Connected Cards Flash Cards App.
 
 ## Motivations and Targets
