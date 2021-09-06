@@ -3,8 +3,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 
 
-@dataclass
-class DeckIn:
+class DeckIn(BaseModel):
     name: str
 
 

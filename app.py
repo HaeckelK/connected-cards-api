@@ -29,7 +29,7 @@ scheduler = Scheduler(new_cards_limit=100,
 
 
 @fastapp.get("/decks", response_model=List[DeckOut])
-async def fast_get_dcks():
+async def fast_get_decks():
     # TODO should work this out after reviews?
     # Update deck stats
     card_count = get_count_cards_by_deck(status="new")
@@ -54,6 +54,12 @@ def get_deck_by_id(id: int):
         if deck.id == id:
             return jsonify(deck.dict())
     return f"Deck not found for id: {id}", 400
+
+
+@fastapp.post("/decks", response_model=DeckOut)
+async def fast_create_deck(new_deck: DeckIn):
+    deck = add_new_deck(new_deck)
+    return deck
 
 
 @app.route("/decks", methods=["POST"])
@@ -155,6 +161,16 @@ def generate_reviews():
 
 @app.route("/wipe", methods=["GET"])
 def wipe_data():
+    global DECKS, CARDS, REVIEWS, NOTES
+    DECKS = []
+    CARDS = []
+    NOTES = []
+    REVIEWS = []
+    return "wiped"
+
+
+@fastapp.get("/wipe")
+def fast_wipe_data():
     global DECKS, CARDS, REVIEWS, NOTES
     DECKS = []
     CARDS = []
