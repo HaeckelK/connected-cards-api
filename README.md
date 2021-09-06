@@ -5,9 +5,9 @@
 
 [](./assets/banner.png)
 <img
-  src="https://github.com/HaeckelK/connected-cards-api/tree/main/frontend/assets/banner.png"
+  src="https://github.com/HaeckelK/connected-cards-api/raw/main/assets/banner.png"
   alt="Connected Cards"
-  width="500"
+  width="750"
 />
 
 Backend API for Connected Cards Flash Cards App.
