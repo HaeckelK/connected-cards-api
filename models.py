@@ -1,12 +1,14 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+
+from pydantic import BaseModel
+
 
 @dataclass
 class DeckIn:
     name: str
 
 
-@dataclass
-class DeckOut:
+class DeckOut(BaseModel):
     id: int
     name: str
     notes_total: int
