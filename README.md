@@ -1,4 +1,8 @@
 # connected-cards-api PROTOTYPE
+
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![python](https://img.shields.io/badge/python-3.7-blue.svg)]()
+
 Backend API for Connected Cards Flash Cards App.
 
 ## Motivations and Targets
