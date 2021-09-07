@@ -39,7 +39,7 @@ async def get_decks():
 
 
 @fastapp.get("/decks/{id}", response_model=DeckOut)
-def get_deck_by_id(id: int):
+async def get_deck_by_id(id: int):
     for deck in DECKS:
         if deck.id == id:
             return deck
@@ -53,7 +53,7 @@ async def create_deck(new_deck: DeckIn):
 
 
 @fastapp.get("/notes", response_model=List[NoteOut])
-def get_notes(deck_id: Optional[str]=None):
+async def get_notes(deck_id: Optional[str]=None):
     if deck_id:
         return [x for x in NOTES if int(x.deck_id) == int(deck_id)]
     else:
@@ -61,7 +61,7 @@ def get_notes(deck_id: Optional[str]=None):
 
 
 @fastapp.post("/notes", response_model=NoteOut)
-def create_note(new_note: NoteIn):
+async def create_note(new_note: NoteIn):
     note = add_new_note(new_note)
 
     # Add cards from note
@@ -80,7 +80,7 @@ def create_note(new_note: NoteIn):
 
 
 @fastapp.get("/cards", response_model=List[CardOut])
-def get_cards():
+async def get_cards():
     return CARDS
 
 
