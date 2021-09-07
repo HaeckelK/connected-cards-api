@@ -17,15 +17,13 @@ class DeckOut(BaseModel):
     count_new_cards: int
 
 
-@dataclass
-class NoteIn:
+class NoteIn(BaseModel):
     deck_id: int
     text_front: str
     text_back: str
 
 
-@dataclass
-class NoteOut:
+class NoteOut(BaseModel):
     id: int
     deck_id: int
     text_front: str

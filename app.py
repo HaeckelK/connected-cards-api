@@ -1,5 +1,5 @@
 from dataclasses import asdict
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -52,6 +52,15 @@ async def create_deck(new_deck: DeckIn):
     return deck
 
 
+@fastapp.get("/notes", response_model=List[NoteOut])
+def fast_get_notes():
+    return NOTES
+    if deck_id:
+        return [x for x in NOTES if int(x.deck_id) == int(deck_id)]
+    else:
+        return [x for x in NOTES]
+
+
 @app.route("/notes", methods=["GET"])
 def get_notes():
     deck_id = request.args.get("deck", None)
@@ -61,14 +70,8 @@ def get_notes():
         return jsonify([asdict(x) for x in NOTES])
 
 
-@app.route("/notes", methods=["POST"])
-def create_note():
-    text_front = request.form["text_front"]
-    text_back = request.form["text_back"]
-    deck_id = int(request.form["deck_id"])
-
-    new_note = NoteIn(deck_id=deck_id, text_front=text_front, text_back=text_back)
-
+@fastapp.post("/notes", response_model=NoteOut)
+def create_note(new_note: NoteIn):
     note = add_new_note(new_note)
 
     # Add cards from note
@@ -83,7 +86,7 @@ def create_note():
         )
     )
 
-    return jsonify(asdict(note))
+    return note
 
 
 @app.route("/cards", methods=["GET"])
@@ -186,7 +189,7 @@ def add_new_deck(new_deck: DeckIn) -> DeckOut:
 
 def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
-    note = NoteOut(**asdict(new_note), id=id, time_created=timestamp())
+    note = NoteOut(**new_note.dict(), id=id, time_created=timestamp())
     NOTES.append(note)
     # Update deck stats
     card_count = get_count_notes_by_deck()
