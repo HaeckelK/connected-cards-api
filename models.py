@@ -1,12 +1,13 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
-@dataclass
-class DeckIn:
+from pydantic import BaseModel
+
+
+class DeckIn(BaseModel):
     name: str
 
 
-@dataclass
-class DeckOut:
+class DeckOut(BaseModel):
     id: int
     name: str
     notes_total: int
@@ -16,15 +17,13 @@ class DeckOut:
     count_new_cards: int
 
 
-@dataclass
-class NoteIn:
+class NoteIn(BaseModel):
     deck_id: int
     text_front: str
     text_back: str
 
 
-@dataclass
-class NoteOut:
+class NoteOut(BaseModel):
     id: int
     deck_id: int
     text_front: str
@@ -44,15 +43,7 @@ class CardIn:
     answer: str
 
 
-# @dataclass
-# class CardModel:
-#     id: str
-#     note_id: int
-#     direction: str
-
-
-@dataclass
-class CardOut:
+class CardOut(BaseModel):
     id: int
     deck_id: int
     note_id: int
@@ -64,8 +55,8 @@ class CardOut:
     time_latest_review: int
     current_review_interval: int
 
-@dataclass
-class ReviewOut:
+
+class ReviewOut(BaseModel):
     id: int
     card: CardOut
     time_created: int

@@ -6,14 +6,14 @@ from app import DeckOut, NoteOut
 
 
 def main():
-    base_url = "http://127.0.0.1:5000/"
+    base_url = "http://127.0.0.1:8000/"
 
     # Wipe existing data
     requests.get(base_url + "wipe")
 
     # Create a deck
     print("Create Deck")
-    response = requests.post(base_url + "decks", data={"name": "French"})
+    response = requests.post(base_url + "decks", data='{"name": "French"}')
     deck = DeckOut(**json.loads(response.content))
     print(deck)
 
@@ -21,7 +21,7 @@ def main():
     print("Create Note")
     response = requests.post(
         base_url + "notes",
-        data={"text_front": "Hello", "text_back": "Bonjour", "deck_id": deck.id},
+        data=f'{{"text_front": "Hello", "text_back": "Bonjour", "deck_id": {deck.id}}}',
     )
     note = NoteOut(**json.loads(response.content))
     print(note)

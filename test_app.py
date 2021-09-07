@@ -7,27 +7,27 @@ import json
 import pytest
 import requests
 
-from models import DeckOut
+from models import DeckOut, NoteOut
 
 
-BASE_URL = "http://127.0.0.1:5000"
+BASE_URL = "http://127.0.0.1:8000"
 
 
 @pytest.fixture
-def clean_data():
+def empty_data():
     requests.get(BASE_URL + "/wipe")
     return
 
 
 @pytest.fixture
-def some_data():
+def decks_only():
     requests.get(BASE_URL + "/wipe")
-    requests.post(BASE_URL + "/decks", data={"name": "French"})
-    requests.post(BASE_URL + "/decks", data={"name": "German"})
+    requests.post(BASE_URL + "/decks", data='{ "name": "French" }')
+    requests.post(BASE_URL + "/decks", data='{ "name": "German" }')
     return
 
-
-def test_get_decks_empty(clean_data):
+# /decks
+def test_get_decks_empty(empty_data):
     # Given an empty dataset
     # When GET /decks
     response = requests.get(BASE_URL + "/decks")
@@ -37,7 +37,7 @@ def test_get_decks_empty(clean_data):
     assert json.loads(response.content) == []
 
 
-def test_get_decks_not_empty(some_data):
+def test_get_decks_not_empty(decks_only):
     # Given a dataset which contains multiple decks
     # When GET / decks
     response = requests.get(BASE_URL + "/decks")
@@ -50,7 +50,7 @@ def test_get_decks_not_empty(some_data):
         DeckOut(**item)
 
 
-def test_get_decks_by_id_exists(some_data):
+def test_get_decks_by_id_exists(decks_only):
     # Given a dataset which contains multiple decks
     # When GET a deck id that exists
     response = requests.get(BASE_URL + "/decks/1")
@@ -60,32 +60,84 @@ def test_get_decks_by_id_exists(some_data):
     DeckOut(**json.loads(response.content))
 
 
-def test_get_decks_by_id_not_exists(some_data):
+def test_get_decks_by_id_not_exists(decks_only):
     # Given a dataset which contains multiple decks
     # When GET a deck id that does not exist
     response = requests.get(BASE_URL + "/decks/99")
     # Then bad status
     assert response.status_code == 400
     # Then error message received
-    assert response.text == "Deck not found for id: 99"
+    assert response.text == "{\"detail\":\"Deck not found for id: 99\"}"
 
 
-def test_post_decks_empty(clean_data):
+def test_post_decks_empty(empty_data):
     # Given an empty dataset
     # When POST /decks
-    response = requests.post(BASE_URL + "/decks", data={"name": "French"})
+    response = requests.post(BASE_URL + '/decks', data='{ "name": "French" }')
     # Then ok status
     assert response.status_code == 200
     # Then DeckOut returned
     DeckOut(**json.loads(response.content))
 
 
-def test_post_decks_empty_duplicate(clean_data):
+def test_post_decks_empty_duplicate(empty_data):
     # Given a dataset with an existing deck
-    requests.post(BASE_URL + "/decks", data={"name": "French"})
+    requests.post(BASE_URL + '/decks', data='{ "name": "French" }')
     # When adding deck of same name
-    response = requests.post(BASE_URL + "/decks", data={"name": "French"})
+    response = requests.post(BASE_URL + '/decks', data='{ "name": "French" }')
     # Then ok status
     assert response.status_code == 200
     # Then duplicate deck added
     assert len(json.loads(requests.get(BASE_URL + "/decks").content)) == 2
+
+# /notes
+def test_get_notes_empty(empty_data):
+    # Given an empty dataset
+    # When GET /notes
+    response = requests.get(BASE_URL + "/notes")
+    # Then ok status
+    assert response.status_code == 200
+    # Then empty list returned
+    assert json.loads(response.content) == []
+
+def test_post_notes_empty(empty_data):
+    # Given a dataset with no notes
+    # When POST /notes
+    response = requests.post(
+        BASE_URL + "/notes",
+        data='{"text_front": "Hello", "text_back": "Bonjour", "deck_id": 1}',
+    )
+    # Then ok status
+    assert response.status_code == 200
+    # Then DeckOut returned
+    NoteOut(**json.loads(response.content))
+
+
+def test_post_notes_empty_duplicate(empty_data):
+    # Given a dataset with an existing note
+    requests.post(
+        BASE_URL + "/notes",
+        data='{"text_front": "Hello", "text_back": "Bonjour", "deck_id": 1}',
+    )
+    # When adding deck of same name
+    response = requests.post(
+        BASE_URL + "/notes",
+        data='{"text_front": "Hello", "text_back": "Bonjour", "deck_id": 1}',
+    )
+    # Then ok status
+    assert response.status_code == 200
+    # Then duplicate deck added
+    assert len(json.loads(requests.get(BASE_URL + "/notes").content)) == 2
+
+# TODO test note creation leads to card creation
+
+# /cards
+# TODO test cards once they exist
+def test_get_cards_empty(empty_data):
+    # Given an empty dataset
+    # When GET /cards
+    response = requests.get(BASE_URL + "/cards")
+    # Then ok status
+    assert response.status_code == 200
+    # Then empty list returned
+    assert json.loads(response.content) == []

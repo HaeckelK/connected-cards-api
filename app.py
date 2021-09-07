@@ -1,8 +1,7 @@
 from dataclasses import asdict
-from typing import List, Dict
+from typing import List, Dict, Optional
 
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from fastapi import FastAPI, HTTPException
 
 from utils import timestamp
 from scheduler import Scheduler
@@ -16,58 +15,47 @@ CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
 
-app = Flask(__name__)
-# TODO limit to correct origin etc
-CORS(app)
+app = FastAPI()
 
 scheduler = Scheduler(new_cards_limit=100,
                       total_cards_limit=100,
                       allow_cards_from_same_note=True)
 
 
-@app.route("/decks", methods=["GET"])
-def get_decks():
+@app.get("/decks", response_model=List[DeckOut])
+async def get_decks():
     # TODO should work this out after reviews?
     # Update deck stats
     card_count = get_count_cards_by_deck(status="new")
     for deck in DECKS:
         deck.count_new_cards = card_count.get(deck.id, 0)
-    return jsonify([asdict(x) for x in DECKS])
+    return DECKS
 
 
-@app.route("/decks/<int:id>", methods=["GET"])
-def get_deck_by_id(id: int):
+@app.get("/decks/{id}", response_model=DeckOut)
+async def get_deck_by_id(id: int):
     for deck in DECKS:
         if deck.id == id:
-            return jsonify(asdict(deck))
-    return f"Deck not found for id: {id}", 400
+            return deck
+    raise HTTPException(status_code=400, detail=f"Deck not found for id: {id}")
 
 
-@app.route("/decks", methods=["POST"])
-def create_deck():
-    name = request.form["name"]
-    new_deck = DeckIn(name=name)
+@app.post("/decks", response_model=DeckOut)
+async def create_deck(new_deck: DeckIn):
     deck = add_new_deck(new_deck)
-    return jsonify(asdict(deck))
+    return deck
 
 
-@app.route("/notes", methods=["GET"])
-def get_notes():
-    deck_id = request.args.get("deck", None)
+@app.get("/notes", response_model=List[NoteOut])
+async def get_notes(deck_id: Optional[str]=None):
     if deck_id:
-        return jsonify([asdict(x) for x in NOTES if int(x.deck_id) == int(deck_id)])
+        return [x for x in NOTES if int(x.deck_id) == int(deck_id)]
     else:
-        return jsonify([asdict(x) for x in NOTES])
+        return NOTES
 
 
-@app.route("/notes", methods=["POST"])
-def create_note():
-    text_front = request.form["text_front"]
-    text_back = request.form["text_back"]
-    deck_id = int(request.form["deck_id"])
-
-    new_note = NoteIn(deck_id=deck_id, text_front=text_front, text_back=text_back)
-
+@app.post("/notes", response_model=NoteOut)
+async def create_note(new_note: NoteIn):
     note = add_new_note(new_note)
 
     # Add cards from note
@@ -82,35 +70,35 @@ def create_note():
         )
     )
 
-    return jsonify(asdict(note))
+    return note
 
 
-@app.route("/cards", methods=["GET"])
-def get_cards():
-    return jsonify([asdict(x) for x in CARDS])
+@app.get("/cards", response_model=List[CardOut])
+async def get_cards():
+    return CARDS
 
 
-@app.route("/reviews", methods=["GET"])
-def get_reviews():
-    # TODO check this isn't amending REVIEWs
+@app.get("/reviews", response_model=List[ReviewOut])
+async def get_reviews(due: int=0, deck_id:int=None):
     reviews = [x for x in REVIEWS]
-    if int(request.args.get("due", default=0)) == 1:
+    if due == 1:
         reviews = [x for x in reviews if x.review_status == "not_reviewed"]
-    deck_id = request.args.get("deck", None)
+
     if deck_id:
         reviews = [x for x in reviews if int(x.card.deck_id) == int(deck_id)]
-    return jsonify([asdict(x) for x in reviews])
+    return reviews
 
 
-@app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
-def mark_review_correct(id: int):
+@app.get("/reviews/mark_correct/{id}")
+async def mark_review_correct(id: int):
     # TODO DRY see mark_review_incorrect
     for review in REVIEWS:
         if review.id == id:
             review.correct = True
             review.time_completed = timestamp()
             review.review_status = "reviewed"
-            change_card_status(review.card.id, status="seen")
+            # change_card_status(review.card.id, status="seen")
+            review.card.status = "seen"
             review.card.time_latest_review = scheduler.review_time
             # TODO what's the growth rate - need some class for managing that
             if review.card.current_review_interval == -1:
@@ -120,27 +108,28 @@ def mark_review_correct(id: int):
     return "done"
 
 
-@app.route("/reviews/mark_incorrect/<int:id>", methods=["GET"])
-def mark_review_incorrect(id: int):
+@app.get("/reviews/mark_incorrect/{id}")
+async def mark_review_incorrect(id: int):
     for review in REVIEWS:
         if review.id == id:
             review.correct = False
             review.time_completed = timestamp()
             review.review_status = "reviewed"
-            change_card_status(review.card.id, status="seen")
+            # change_card_status(review.card.id, status="seen")
+            review.card.status = "seen"
             review.card.time_latest_review = scheduler.review_time
     return "done"
 
 
 # Actions that should be behind worker
-@app.route("/generate_reviews", methods=["GET"])
+@app.get("/generate_reviews")
 def generate_reviews():
     global REVIEWS
     REVIEWS = scheduler.create_reviews(reviews=REVIEWS, cards=CARDS)
     return f"Reviews Generated {len(REVIEWS)}"
 
 
-@app.route("/wipe", methods=["GET"])
+@app.get("/wipe")
 def wipe_data():
     global DECKS, CARDS, REVIEWS, NOTES
     DECKS = []
@@ -150,16 +139,16 @@ def wipe_data():
     return "wiped"
 
 
-@app.route("/wipe/reviews", methods=["GET"])
+@app.get("/wipe/reviews")
 def wipe_reviews():
     global REVIEWS, CARDS
     REVIEWS = []
     for card in CARDS:
         card.status = "new"
-    return "wiped"
+    return "reviews wiped"
 
 
-@app.route("/increment_scheduler", methods=["GET"])
+@app.get("/increment_scheduler")
 def increment_scheduler():
     scheduler.review_time += 86400
     return f"New time: {scheduler.review_time}"
@@ -175,7 +164,7 @@ def add_new_deck(new_deck: DeckIn) -> DeckOut:
 
 def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
-    note = NoteOut(**asdict(new_note), id=id, time_created=timestamp())
+    note = NoteOut(**new_note.dict(), id=id, time_created=timestamp())
     NOTES.append(note)
     # Update deck stats
     card_count = get_count_notes_by_deck()
