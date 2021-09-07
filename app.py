@@ -84,16 +84,15 @@ async def get_cards():
     return CARDS
 
 
-@app.route("/reviews", methods=["GET"])
-def get_reviews():
-    # TODO check this isn't amending REVIEWs
+@fastapp.get("/reviews", response_model=List[ReviewOut])
+async def get_reviews(due: int=0, deck_id:int=None):
     reviews = [x for x in REVIEWS]
-    if int(request.args.get("due", default=0)) == 1:
+    if due == 1:
         reviews = [x for x in reviews if x.review_status == "not_reviewed"]
-    deck_id = request.args.get("deck", None)
+
     if deck_id:
         reviews = [x for x in reviews if int(x.card.deck_id) == int(deck_id)]
-    return jsonify([asdict(x) for x in reviews])
+    return reviews
 
 
 @app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
@@ -127,7 +126,7 @@ def mark_review_incorrect(id: int):
 
 
 # Actions that should be behind worker
-@app.route("/generate_reviews", methods=["GET"])
+@fastapp.get("/generate_reviews")
 def generate_reviews():
     global REVIEWS
     REVIEWS = scheduler.create_reviews(reviews=REVIEWS, cards=CARDS)

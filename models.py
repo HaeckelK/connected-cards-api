@@ -56,8 +56,7 @@ class CardOut(BaseModel):
     current_review_interval: int
 
 
-@dataclass
-class ReviewOut:
+class ReviewOut(BaseModel):
     id: int
     card: CardOut
     time_created: int
