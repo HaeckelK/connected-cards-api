@@ -3,7 +3,7 @@ from typing import List, Dict
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from utils import timestamp
 from scheduler import Scheduler
@@ -29,7 +29,7 @@ scheduler = Scheduler(new_cards_limit=100,
 
 
 @fastapp.get("/decks", response_model=List[DeckOut])
-async def fast_get_decks():
+async def get_decks():
     # TODO should work this out after reviews?
     # Update deck stats
     card_count = get_count_cards_by_deck(status="new")
@@ -38,36 +38,18 @@ async def fast_get_decks():
     return DECKS
 
 
-@app.route("/decks", methods=["GET"])
-def get_decks():
-    # TODO should work this out after reviews?
-    # Update deck stats
-    card_count = get_count_cards_by_deck(status="new")
-    for deck in DECKS:
-        deck.count_new_cards = card_count.get(deck.id, 0)
-    return jsonify([x.dict() for x in DECKS])
-
-
-@app.route("/decks/<int:id>", methods=["GET"])
+@fastapp.get("/decks/{id}", response_model=DeckOut)
 def get_deck_by_id(id: int):
     for deck in DECKS:
         if deck.id == id:
-            return jsonify(deck.dict())
-    return f"Deck not found for id: {id}", 400
+            return deck
+    raise HTTPException(status_code=400, detail=f"Deck not found for id: {id}")
 
 
 @fastapp.post("/decks", response_model=DeckOut)
-async def fast_create_deck(new_deck: DeckIn):
+async def create_deck(new_deck: DeckIn):
     deck = add_new_deck(new_deck)
     return deck
-
-
-@app.route("/decks", methods=["POST"])
-def create_deck():
-    name = request.form["name"]
-    new_deck = DeckIn(name=name)
-    deck = add_new_deck(new_deck)
-    return jsonify(deck.dict())
 
 
 @app.route("/notes", methods=["GET"])
