@@ -134,7 +134,7 @@ def generate_reviews():
     return f"Reviews Generated {len(REVIEWS)}"
 
 
-@app.route("/wipe", methods=["GET"])
+@fastapp.get("/wipe")
 def wipe_data():
     global DECKS, CARDS, REVIEWS, NOTES
     DECKS = []
@@ -144,26 +144,16 @@ def wipe_data():
     return "wiped"
 
 
-@fastapp.get("/wipe")
-def fast_wipe_data():
-    global DECKS, CARDS, REVIEWS, NOTES
-    DECKS = []
-    CARDS = []
-    NOTES = []
-    REVIEWS = []
-    return "wiped"
-
-
-@app.route("/wipe/reviews", methods=["GET"])
+@fastapp.get("/wipe/reviews")
 def wipe_reviews():
     global REVIEWS, CARDS
     REVIEWS = []
     for card in CARDS:
         card.status = "new"
-    return "wiped"
+    return "reviews wiped"
 
 
-@app.route("/increment_scheduler", methods=["GET"])
+@fastapp.get("/increment_scheduler")
 def increment_scheduler():
     scheduler.review_time += 86400
     return f"New time: {scheduler.review_time}"
