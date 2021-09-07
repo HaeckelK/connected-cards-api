@@ -53,21 +53,11 @@ async def create_deck(new_deck: DeckIn):
 
 
 @fastapp.get("/notes", response_model=List[NoteOut])
-def fast_get_notes():
-    return NOTES
+def get_notes(deck_id: Optional[str]=None):
     if deck_id:
         return [x for x in NOTES if int(x.deck_id) == int(deck_id)]
     else:
-        return [x for x in NOTES]
-
-
-@app.route("/notes", methods=["GET"])
-def get_notes():
-    deck_id = request.args.get("deck", None)
-    if deck_id:
-        return jsonify([asdict(x) for x in NOTES if int(x.deck_id) == int(deck_id)])
-    else:
-        return jsonify([asdict(x) for x in NOTES])
+        return NOTES
 
 
 @fastapp.post("/notes", response_model=NoteOut)
