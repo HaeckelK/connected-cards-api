@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from typing import List, Dict, Optional
 
-from flask import Flask, jsonify, request
+from flask import Flask
 from flask_cors import CORS
 from fastapi import FastAPI, HTTPException
 
@@ -95,15 +95,16 @@ async def get_reviews(due: int=0, deck_id:int=None):
     return reviews
 
 
-@app.route("/reviews/mark_correct/<int:id>", methods=["GET"])
-def mark_review_correct(id: int):
+@fastapp.get("/reviews/mark_correct/{id}")
+async def mark_review_correct(id: int):
     # TODO DRY see mark_review_incorrect
     for review in REVIEWS:
         if review.id == id:
             review.correct = True
             review.time_completed = timestamp()
             review.review_status = "reviewed"
-            change_card_status(review.card.id, status="seen")
+            # change_card_status(review.card.id, status="seen")
+            review.card.status = "seen"
             review.card.time_latest_review = scheduler.review_time
             # TODO what's the growth rate - need some class for managing that
             if review.card.current_review_interval == -1:
@@ -113,14 +114,15 @@ def mark_review_correct(id: int):
     return "done"
 
 
-@app.route("/reviews/mark_incorrect/<int:id>", methods=["GET"])
-def mark_review_incorrect(id: int):
+@fastapp.get("/reviews/mark_incorrect/{id}")
+async def mark_review_incorrect(id: int):
     for review in REVIEWS:
         if review.id == id:
             review.correct = False
             review.time_completed = timestamp()
             review.review_status = "reviewed"
-            change_card_status(review.card.id, status="seen")
+            # change_card_status(review.card.id, status="seen")
+            review.card.status = "seen"
             review.card.time_latest_review = scheduler.review_time
     return "done"
 
