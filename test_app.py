@@ -10,23 +10,17 @@ import requests
 from models import DeckOut, NoteOut
 
 
-BASE_URL = "http://127.0.0.1:5000"
 FASTAPI_URL = "http://127.0.0.1:8000"
 
 
 @pytest.fixture
 def empty_data():
-    requests.get(BASE_URL + "/wipe")
     requests.get(FASTAPI_URL + "/wipe")
     return
 
 
 @pytest.fixture
 def decks_only():
-    requests.get(BASE_URL + "/wipe")
-    requests.post(BASE_URL + "/decks", data={"name": "French"})
-    requests.post(BASE_URL + "/decks", data={"name": "German"})
-
     requests.get(FASTAPI_URL + "/wipe")
     requests.post(FASTAPI_URL + "/decks", data='{ "name": "French" }')
     requests.post(FASTAPI_URL + "/decks", data='{ "name": "German" }')
