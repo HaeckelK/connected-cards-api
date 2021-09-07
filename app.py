@@ -1,8 +1,6 @@
 from dataclasses import asdict
 from typing import List, Dict, Optional
 
-from flask import Flask
-from flask_cors import CORS
 from fastapi import FastAPI, HTTPException
 
 from utils import timestamp
@@ -16,10 +14,6 @@ DECKS, NOTES = [], []
 CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
-
-app = Flask(__name__)
-# TODO limit to correct origin etc
-CORS(app)
 
 fastapp = FastAPI()
 
