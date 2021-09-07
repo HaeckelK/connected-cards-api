@@ -5,7 +5,7 @@ import requests
 
 app = Flask(__name__)
 
-API_URL = "http://127.0.0.1:5000/"
+API_URL = "http://127.0.0.1:8000/"
 
 @app.route("/")
 def index():
@@ -23,7 +23,7 @@ def decks():
 def create_deck():
     name = request.args.get("name", None)
     if name:
-        response = requests.post(API_URL + "decks", data={"name": name})
+        response = requests.post(API_URL + "decks", data=f'{{"name": "{name}"}}')
         if response.status_code != 200:
             pass
         return redirect(url_for("decks"))
@@ -35,10 +35,10 @@ def deck(id: int) -> str:
     response = requests.get(API_URL + f"decks/{id}")
     deck = json.loads(response.content)
 
-    response = requests.get(API_URL + f"notes?deck={id}")
+    response = requests.get(API_URL + f"notes?deck_id={id}")
     notes = json.loads(response.content)
 
-    response = requests.get(API_URL + f"reviews?due=1&deck={id}")
+    response = requests.get(API_URL + f"reviews?due=1&deck_id={id}")
     reviews = json.loads(response.content)
 
     return render_template("deck.html", deck=deck, notes=notes, reviews=reviews)
@@ -55,7 +55,7 @@ def create_note():
     deck_id = request.args.get("deck", None)
     if not deck_id:
         return redirect(request.referrer)
-    response = requests.post(API_URL + "notes", data={"text_front": front, "text_back": back, "deck_id": deck_id})
+    response = requests.post(API_URL + "notes", data=f'{{"text_front": "{front}", "text_back": "{back}", "deck_id": "{deck_id}"}}')
     if response.status_code != 200:
         pass
     return redirect(request.referrer)
