@@ -15,14 +15,14 @@ CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
 
-fastapp = FastAPI()
+app = FastAPI()
 
 scheduler = Scheduler(new_cards_limit=100,
                       total_cards_limit=100,
                       allow_cards_from_same_note=True)
 
 
-@fastapp.get("/decks", response_model=List[DeckOut])
+@app.get("/decks", response_model=List[DeckOut])
 async def get_decks():
     # TODO should work this out after reviews?
     # Update deck stats
@@ -32,7 +32,7 @@ async def get_decks():
     return DECKS
 
 
-@fastapp.get("/decks/{id}", response_model=DeckOut)
+@app.get("/decks/{id}", response_model=DeckOut)
 async def get_deck_by_id(id: int):
     for deck in DECKS:
         if deck.id == id:
@@ -40,13 +40,13 @@ async def get_deck_by_id(id: int):
     raise HTTPException(status_code=400, detail=f"Deck not found for id: {id}")
 
 
-@fastapp.post("/decks", response_model=DeckOut)
+@app.post("/decks", response_model=DeckOut)
 async def create_deck(new_deck: DeckIn):
     deck = add_new_deck(new_deck)
     return deck
 
 
-@fastapp.get("/notes", response_model=List[NoteOut])
+@app.get("/notes", response_model=List[NoteOut])
 async def get_notes(deck_id: Optional[str]=None):
     if deck_id:
         return [x for x in NOTES if int(x.deck_id) == int(deck_id)]
@@ -54,7 +54,7 @@ async def get_notes(deck_id: Optional[str]=None):
         return NOTES
 
 
-@fastapp.post("/notes", response_model=NoteOut)
+@app.post("/notes", response_model=NoteOut)
 async def create_note(new_note: NoteIn):
     note = add_new_note(new_note)
 
@@ -73,12 +73,12 @@ async def create_note(new_note: NoteIn):
     return note
 
 
-@fastapp.get("/cards", response_model=List[CardOut])
+@app.get("/cards", response_model=List[CardOut])
 async def get_cards():
     return CARDS
 
 
-@fastapp.get("/reviews", response_model=List[ReviewOut])
+@app.get("/reviews", response_model=List[ReviewOut])
 async def get_reviews(due: int=0, deck_id:int=None):
     reviews = [x for x in REVIEWS]
     if due == 1:
@@ -89,7 +89,7 @@ async def get_reviews(due: int=0, deck_id:int=None):
     return reviews
 
 
-@fastapp.get("/reviews/mark_correct/{id}")
+@app.get("/reviews/mark_correct/{id}")
 async def mark_review_correct(id: int):
     # TODO DRY see mark_review_incorrect
     for review in REVIEWS:
@@ -108,7 +108,7 @@ async def mark_review_correct(id: int):
     return "done"
 
 
-@fastapp.get("/reviews/mark_incorrect/{id}")
+@app.get("/reviews/mark_incorrect/{id}")
 async def mark_review_incorrect(id: int):
     for review in REVIEWS:
         if review.id == id:
@@ -122,14 +122,14 @@ async def mark_review_incorrect(id: int):
 
 
 # Actions that should be behind worker
-@fastapp.get("/generate_reviews")
+@app.get("/generate_reviews")
 def generate_reviews():
     global REVIEWS
     REVIEWS = scheduler.create_reviews(reviews=REVIEWS, cards=CARDS)
     return f"Reviews Generated {len(REVIEWS)}"
 
 
-@fastapp.get("/wipe")
+@app.get("/wipe")
 def wipe_data():
     global DECKS, CARDS, REVIEWS, NOTES
     DECKS = []
@@ -139,7 +139,7 @@ def wipe_data():
     return "wiped"
 
 
-@fastapp.get("/wipe/reviews")
+@app.get("/wipe/reviews")
 def wipe_reviews():
     global REVIEWS, CARDS
     REVIEWS = []
@@ -148,7 +148,7 @@ def wipe_reviews():
     return "reviews wiped"
 
 
-@fastapp.get("/increment_scheduler")
+@app.get("/increment_scheduler")
 def increment_scheduler():
     scheduler.review_time += 86400
     return f"New time: {scheduler.review_time}"
