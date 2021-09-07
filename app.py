@@ -79,9 +79,9 @@ def create_note(new_note: NoteIn):
     return note
 
 
-@app.route("/cards", methods=["GET"])
+@fastapp.get("/cards", response_model=List[CardOut])
 def get_cards():
-    return jsonify([asdict(x) for x in CARDS])
+    return CARDS
 
 
 @app.route("/reviews", methods=["GET"])

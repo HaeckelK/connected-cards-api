@@ -43,15 +43,7 @@ class CardIn:
     answer: str
 
 
-# @dataclass
-# class CardModel:
-#     id: str
-#     note_id: int
-#     direction: str
-
-
-@dataclass
-class CardOut:
+class CardOut(BaseModel):
     id: int
     deck_id: int
     note_id: int
@@ -62,6 +54,7 @@ class CardOut:
     time_created: int
     time_latest_review: int
     current_review_interval: int
+
 
 @dataclass
 class ReviewOut:
