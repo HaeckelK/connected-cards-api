@@ -22,11 +22,15 @@ class Scheduler:
     def create_reviews(self, reviews, cards) -> List[ReviewOut]:
         # TODO should create views by deck
 
-        # Remove any incomplete reviews
+        if not cards:
+            return reviews
+
         try:
             next_review_id = max([x.id for x in reviews]) + 1
         except ValueError:
             next_review_id = 1
+
+        # Remove any incomplete reviews
         reviews = [x for x in reviews if x.review_status != "not_reviewed"]
 
         pool = []
