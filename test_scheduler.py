@@ -9,6 +9,7 @@ def test_scheduler_init():
     scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
 
 
+# create_reviews
 def test_scheduler_create_reviews_empty():
     # Given a scheduler and empty cards and reviews
     scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
@@ -65,3 +66,46 @@ def test_scheduler_create_reviews_properties(monkeypatch):
 
 
 # TODO need to check what happens when running for multiple days
+# card scheduling
+def test_schedule_schedule_card_new_correct(monkeypatch):
+    monkeypatch.setattr(module, "timestamp", lambda: 0)
+    # Given a scheduler and a new card
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    # TODO connect new card creation to app.py functions
+    new_card = CardIn(note_id=1, direction="regular", deck_id=1, question="Hello", answer="Bonjour")
+    card = CardOut(
+            id=1,
+            **asdict(new_card),
+            status="new",
+            time_created=0,
+            time_latest_review=-1,
+            current_review_interval=-1
+        )
+    # When scheduling next review for correct answer
+    card = scheduler.schedule_card(card, correct=True)
+    # Then card time_latest_review updated
+    assert card.time_latest_review == scheduler.review_time
+    # Then current_review_interval is scheduler minimum
+    assert card.current_review_interval == scheduler.minimum_review_interval
+
+
+def test_schedule_schedule_card_new_incorrect(monkeypatch):
+    monkeypatch.setattr(module, "timestamp", lambda: 0)
+    # Given a scheduler and a new card
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    # TODO connect new card creation to app.py functions
+    new_card = CardIn(note_id=1, direction="regular", deck_id=1, question="Hello", answer="Bonjour")
+    card = CardOut(
+            id=1,
+            **asdict(new_card),
+            status="new",
+            time_created=0,
+            time_latest_review=-1,
+            current_review_interval=-1
+        )
+    # When scheduling next review for incorrect answer
+    card = scheduler.schedule_card(card, correct=False)
+    # Then card time_latest_review updated
+    assert card.time_latest_review == scheduler.review_time
+    # Then current_review_interval not updated
+    assert card.current_review_interval == -1
