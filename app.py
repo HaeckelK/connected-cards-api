@@ -99,6 +99,7 @@ async def mark_review_correct(id: int):
             review.review_status = "reviewed"
             # change_card_status(review.card.id, status="seen")
             review.card.status = "seen"
+            # TODO replace with call to scheduler.schedule_card
             review.card.time_latest_review = scheduler.review_time
             # TODO what's the growth rate - need some class for managing that
             if review.card.current_review_interval == -1:
@@ -116,6 +117,7 @@ async def mark_review_incorrect(id: int):
             review.time_completed = timestamp()
             review.review_status = "reviewed"
             # change_card_status(review.card.id, status="seen")
+            # TODO replace with call to scheduler.schedule_card
             review.card.status = "seen"
             review.card.time_latest_review = scheduler.review_time
     return "done"
