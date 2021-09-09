@@ -2,14 +2,16 @@ from typing import List
 
 from utils import timestamp, yesterday_midnight
 
-from models import ReviewOut
+from models import ReviewOut, CardOut
 
 
 class Scheduler:
-    def __init__(self, new_cards_limit: int, total_cards_limit: int, allow_cards_from_same_note: bool) -> None:
+    def __init__(self, new_cards_limit: int, total_cards_limit: int, allow_cards_from_same_note: bool,
+                 minimum_review_interval: int=86400) -> None:
         self.new_cards_limit = new_cards_limit
         self.allow_cards_from_same_note = allow_cards_from_same_note
         self.total_cards_limit = total_cards_limit
+        self.minimum_review_interval = minimum_review_interval
         self.review_time = -1
         self.set_review_time()
         return
@@ -22,11 +24,15 @@ class Scheduler:
     def create_reviews(self, reviews, cards) -> List[ReviewOut]:
         # TODO should create views by deck
 
-        # Remove any incomplete reviews
+        if not cards:
+            return reviews
+
         try:
             next_review_id = max([x.id for x in reviews]) + 1
         except ValueError:
             next_review_id = 1
+
+        # Remove any incomplete reviews
         reviews = [x for x in reviews if x.review_status != "not_reviewed"]
 
         pool = []
@@ -70,3 +76,13 @@ class Scheduler:
             )
             reviews.append(review)
         return reviews
+
+    def schedule_card(self, card: CardOut, correct: bool) -> CardOut:
+        card.time_latest_review = self.review_time
+        if not correct:
+            return card
+        if card.current_review_interval == -1:
+            card.current_review_interval = self.minimum_review_interval
+        else:
+            card.current_review_interval *= 2
+        return card
