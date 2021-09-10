@@ -99,10 +99,47 @@ def test_scheduler_create_reviews_dispersal_batch(monkeypatch):
     # When creating reviews
     reviews = scheduler.create_reviews(reviews=reviews, cards=cards)
     # Then review created with expected attributes
-    # TODO my actual assert should have card1, card2 but not card3
-    # TODO with different batches should have card1, card2, card3
     assert len(reviews) == 2
     assert set([review.card.id for review in reviews]) == set([1,2])
+
+
+def test_scheduler_create_reviews_dispersal_batch_all_distinct():
+    # Given a scheduler, empty reviews and multiple cards, with no common dispersal batch ids
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    # TODO connect new card creation to app.py functions
+    # TODO options on regular
+    new_card = CardIn(note_id=1, direction="regular", deck_id=1, question="Hello", answer="Bonjour")
+    card_template = CardOut(
+            id=1,
+            **asdict(new_card),
+            status="new",
+            time_created=0,
+            time_latest_review=-1,
+            current_review_interval=-1
+        )
+    card1 = card_template.copy()
+    card2 = card_template.copy()
+    card3 = card_template.copy()
+
+    card1.id = 1
+    card2.id = 2
+    card3.id = 3
+
+    card1.dispersal_batch = [1]
+
+    card2.note_id = 2
+    card2.dispersal_batch = [2]
+
+    card3.note_id = 3
+    card3.dispersal_batch = [3]
+
+    cards = [card1, card2, card3]
+    reviews = []
+    # When creating reviews
+    reviews = scheduler.create_reviews(reviews=reviews, cards=cards)
+    # Then review created with expected attributes
+    assert len(reviews) == 3
+    assert set([review.card.id for review in reviews]) == set([1,2,3])
 
 
 # TODO need to check what happens when running for multiple days
