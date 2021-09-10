@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 
 from pydantic import BaseModel
 
@@ -54,6 +55,7 @@ class CardOut(BaseModel):
     time_created: int
     time_latest_review: int
     current_review_interval: int
+    dispersal_groups: List[int] = []
 
 
 class ReviewOut(BaseModel):
