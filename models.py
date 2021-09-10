@@ -55,7 +55,7 @@ class CardOut(BaseModel):
     time_created: int
     time_latest_review: int
     current_review_interval: int
-    dispersal_batch: List[int] = []
+    dispersal_groups: List[int] = []
 
 
 class ReviewOut(BaseModel):

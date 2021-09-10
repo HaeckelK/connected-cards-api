@@ -65,9 +65,9 @@ def test_scheduler_create_reviews_properties(monkeypatch):
     ]
 
 
-def test_scheduler_create_reviews_dispersal_batch(monkeypatch):
+def test_scheduler_create_reviews_dispersal_group(monkeypatch):
     monkeypatch.setattr(module, "timestamp", lambda: 0)
-    # Given a scheduler, empty reviews and multiple cards, and some with same dispersal batch
+    # Given a scheduler, empty reviews and multiple cards, and some with same dispersal group
     scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
     # TODO connect new card creation to app.py functions
     # TODO options on regular
@@ -89,10 +89,10 @@ def test_scheduler_create_reviews_dispersal_batch(monkeypatch):
     card3.id = 3
 
     card2.note_id = 2
-    card2.dispersal_batch = [1]  # TODO make this a random number
+    card2.dispersal_groups = [1]  # TODO make this a random number
 
     card3.note_id = 3
-    card3.dispersal_batch = [1]
+    card3.dispersal_groups = [1]
 
     cards = [card1, card2, card3]
     reviews = []
@@ -103,8 +103,8 @@ def test_scheduler_create_reviews_dispersal_batch(monkeypatch):
     assert set([review.card.id for review in reviews]) == set([1,2])
 
 
-def test_scheduler_create_reviews_dispersal_batch_all_distinct():
-    # Given a scheduler, empty reviews and multiple cards, with no common dispersal batch ids
+def test_scheduler_create_reviews_dispersal_groups_all_distinct():
+    # Given a scheduler, empty reviews and multiple cards, with no common dispersal group ids
     scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
     # TODO connect new card creation to app.py functions
     # TODO options on regular
@@ -125,13 +125,13 @@ def test_scheduler_create_reviews_dispersal_batch_all_distinct():
     card2.id = 2
     card3.id = 3
 
-    card1.dispersal_batch = [1]
+    card1.dispersal_groups = [1]
 
     card2.note_id = 2
-    card2.dispersal_batch = [2]
+    card2.dispersal_groups = [2]
 
     card3.note_id = 3
-    card3.dispersal_batch = [3]
+    card3.dispersal_groups = [3]
 
     cards = [card1, card2, card3]
     reviews = []

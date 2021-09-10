@@ -5,7 +5,7 @@ from utils import timestamp, yesterday_midnight
 from models import ReviewOut, CardOut
 
 
-# TODO allow max number of dispersal batch cards
+# TODO allow max number of dispersal group cards
 class Scheduler:
     def __init__(self, new_cards_limit: int, total_cards_limit: int, allow_cards_from_same_note: bool,
                  minimum_review_interval: int=86400) -> None:
@@ -40,7 +40,7 @@ class Scheduler:
         # TODO what order? Random? Or Order addded
         new_count = 0
         note_ids = set()
-        dispersal_batch_ids = set()
+        dispersal_group_ids = set()
         for card in cards:
             print(card)
             # Don't allow cards that are not due
@@ -53,11 +53,11 @@ class Scheduler:
                 print("Rejected: note id already been seen in pool")
                 continue
             
-            # Don't allow cards from the same batch to be reviewed on same day
+            # Don't allow cards from the same group to be reviewed on same day
             skip = False
-            for dispersal_batch_id in card.dispersal_batch:
-                if dispersal_batch_id in dispersal_batch_ids:
-                    print(f"Rejected: batch id {dispersal_batch_id} already seen in pool")
+            for dispersal_group_id in card.dispersal_groups:
+                if dispersal_group_id in dispersal_group_ids:
+                    print(f"Rejected: group id {dispersal_group_id} already seen in pool")
                     skip = True
                     break
             if skip:
@@ -79,7 +79,7 @@ class Scheduler:
                 new_count += 1
 
             note_ids.add(card.note_id)
-            dispersal_batch_ids.update(card.dispersal_batch)
+            dispersal_group_ids.update(card.dispersal_groups)
             pool.append(card)
 
         for i, card in enumerate(pool):
