@@ -10,16 +10,18 @@ class Deck(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     time_created = Column(Integer, nullable=False)
+    notes = relationship("Note")
 
 
 class Note(Base):
     __tablename__ = "notes"
 
     id = Column(Integer, primary_key=True, index=True)
-    deck_id = Column(Integer, nullable=False, index=True)
+    deck_id = Column(Integer, ForeignKey('decks.id'))
     text_front = Column(String, nullable=False)
     text_back = Column(String, nullable=False)
     time_created = Column(Integer, nullable=False)
+    
 
 
 class Card(Base):
