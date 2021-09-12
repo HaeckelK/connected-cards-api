@@ -2,6 +2,7 @@ requests==2.26.0
 psycopg2-binary==2.9.1
 fastapi
 uvicorn
+SQLAlchemy
 
 pytest
 coverage
