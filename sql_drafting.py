@@ -2,7 +2,7 @@ from typing import List
 
 from database import SessionLocal, engine
 import dbmodels
-from dbmodels import Deck, Note, Card, Review
+from dbmodels import Deck, Note, Card, Review, NoteConnection
 from models import DeckOut, NoteOut
 
 dbmodels.Base.metadata.drop_all(bind=engine)
@@ -115,6 +115,13 @@ with Session(engine) as session:
 
     session.add(review_bonjour_regular)
     session.add(review_bonjour_reverse)
+    session.commit()
+
+    # Add NoteConnection
+    note_connection = NoteConnection(dependent_note_id=rouge_note.id,
+                                     required_note_id=bonjour_note.id)
+    
+    session.add(note_connection)
     session.commit()
     # Queries
     decks_out = get_decks()

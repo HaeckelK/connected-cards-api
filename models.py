@@ -30,6 +30,7 @@ class NoteOut(BaseModel):
     text_front: str  # From database
     text_back: str  # From database
     time_created: int  # From database
+    # cards_total: int # Calculated
 
 
 # TODO remove question and answer, these are only to be stored in Note

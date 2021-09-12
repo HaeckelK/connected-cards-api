@@ -47,3 +47,11 @@ class Review(Base):
     time_completed = Column(Integer, nullable=False)
     review_status = Column(String, nullable=False)
     correct = Column(Integer, nullable=False)
+
+
+class NoteConnection(Base):
+    __tablename__ = "note_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dependent_note_id = Column(Integer, ForeignKey('notes.id'))
+    required_note_id = Column(Integer, ForeignKey('notes.id'))
