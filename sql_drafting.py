@@ -2,7 +2,7 @@ from typing import List
 
 from database import SessionLocal, engine
 import dbmodels
-from dbmodels import Deck, Note
+from dbmodels import Deck, Note, Card
 from models import DeckOut, NoteOut
 
 dbmodels.Base.metadata.drop_all(bind=engine)
@@ -57,16 +57,19 @@ left join (
         output.append(deck)
     return output
 
+# TODO for cards must return -1 for time lastest review if empty
+
+
 
 with Session(engine) as session:
-    # Create some decks
+    # Add some decks
     german_deck = Deck(name="German", time_created=0)
     french_deck = Deck(name="French", time_created=0)
     session.add(german_deck)
     session.add(french_deck)
     session.commit()
 
-    # Create some notes
+    # Add some notes
     bonjour_note = Note(deck_id=french_deck.id,
                 text_front="hello",
                 text_back="bonjour",
@@ -77,6 +80,25 @@ with Session(engine) as session:
                 time_created=0)
     session.add(bonjour_note)
     session.add(rouge_note)
+    session.commit()
+
+    # Add some cards
+    bonjour_regular = Card(note_id=bonjour_note.id,
+                         direction="regular",
+                         question=bonjour_note.text_front,
+                         answer=bonjour_note.text_back,
+                         status="new",
+                         current_review_interval=-1,
+                         time_created=0)
+    bonjour_reverse = Card(note_id=bonjour_note.id,
+                         direction="reverse",
+                         question=bonjour_note.text_back,
+                         answer=bonjour_note.text_front,
+                         status="new",
+                         current_review_interval=-1,
+                         time_created=0)
+    session.add(bonjour_regular)
+    session.add(bonjour_reverse)
     session.commit()
 
     # Queries
