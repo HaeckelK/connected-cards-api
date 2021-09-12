@@ -2,7 +2,7 @@ from typing import List
 
 from database import SessionLocal, engine
 import dbmodels
-from dbmodels import Deck, Note, Card
+from dbmodels import Deck, Note, Card, Review
 from models import DeckOut, NoteOut
 
 dbmodels.Base.metadata.drop_all(bind=engine)
@@ -101,6 +101,21 @@ with Session(engine) as session:
     session.add(bonjour_reverse)
     session.commit()
 
+    # Add Reviews
+    review_bonjour_regular = Review(card_id=bonjour_regular.id,
+                                  time_created=0,
+                                  time_completed=-1,
+                                  review_status="not_reviewed",
+                                  correct=-1)
+    review_bonjour_reverse = Review(card_id=bonjour_reverse.id,
+                                  time_created=0,
+                                  time_completed=-1,
+                                  review_status="not_reviewed",
+                                  correct=-1)
+
+    session.add(review_bonjour_regular)
+    session.add(review_bonjour_reverse)
+    session.commit()
     # Queries
     decks_out = get_decks()
     print(decks_out)

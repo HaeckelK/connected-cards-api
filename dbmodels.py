@@ -21,27 +21,28 @@ class Note(Base):
     text_front = Column(String, nullable=False)
     text_back = Column(String, nullable=False)
     time_created = Column(Integer, nullable=False)
-    
+    cards = relationship("Card")
 
 
 class Card(Base):
     __tablename__ = "cards"
 
     id = Column(Integer, primary_key=True, index=True)
-    note_id = Column(Integer, nullable=False, index=True)
+    note_id = Column(Integer, ForeignKey('notes.id'))
     direction = Column(String, nullable=False)
     question = Column(String, nullable=False)
     answer = Column(String, nullable=False)
     status = Column(String, nullable=False)
     current_review_interval = Column(Integer, nullable=False)
     time_created = Column(Integer, nullable=False)
+    reviews = relationship("Review")
 
 
 class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(Integer, primary_key=True, index=True)
-    card_id = Column(Integer, index=True)
+    card_id = Column(Integer, ForeignKey('cards.id'))
     time_created = Column(Integer, nullable=False)
     time_completed = Column(Integer, nullable=False)
     review_status = Column(String, nullable=False)
