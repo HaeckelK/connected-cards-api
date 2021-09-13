@@ -55,3 +55,11 @@ class NoteConnection(Base):
     id = Column(Integer, primary_key=True, index=True)
     dependent_note_id = Column(Integer, ForeignKey('notes.id'))
     required_note_id = Column(Integer, ForeignKey('notes.id'))
+
+
+class DispersalGroup(Base):
+    __tablename__ = "dispersal_groups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    card_id = Column(Integer, ForeignKey('cards.id'))
+    group_id = Column(Integer, nullable=False)
