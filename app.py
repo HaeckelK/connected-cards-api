@@ -1,11 +1,15 @@
 from dataclasses import asdict
 from typing import List, Dict, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 
 from utils import timestamp
 from scheduler import Scheduler
 from models import DeckIn, DeckOut, NoteIn, NoteOut, CardIn, CardOut, ReviewOut
+import dbmodels
+from database import engine, SessionLocal
+from dbmodels import Deck, Note, Card, Review, DispersalGroup, NoteConnection
+from sqlalchemy.orm import Session
 
 MINIMUM_INTERVAL = 86400
 
@@ -14,6 +18,8 @@ DECKS, NOTES = [], []
 CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
+dbmodels.Base.metadata.drop_all(bind=engine)
+dbmodels.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -121,6 +127,39 @@ async def mark_review_incorrect(id: int):
             review.card.status = "seen"
             review.card.time_latest_review = scheduler.review_time
     return "done"
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Temporary scoffolding
+@app.get("/save")
+def save_memory_to_database(db: Session = Depends(get_db)):
+    # Currently deletes all data from db - obviously not safe
+    dbmodels.Base.metadata.drop_all(bind=engine)
+    dbmodels.Base.metadata.create_all(bind=engine)
+
+    for deck in DECKS:
+        db_deck = Deck(id=deck.id, name=deck.name, time_created=deck.time_created)
+        db.add(db_deck)
+
+    for note in NOTES:
+        db_note = Note(id=note.id, deck_id=note.deck_id, text_front=note.text_front, text_back=note.text_back, time_created=note.time_created)
+        db.add(db_note)
+
+    for card in CARDS:
+        db_card = Card(id=card.id, note_id=card.note_id, direction=card.direction,question=card.question, answer=card.answer, status=card.status, current_review_interval=card.current_review_interval, time_created=card.time_created)
+        db.add(db_card)
+
+    for review in REVIEWS:
+        db_review = Review(id=review.id, card_id=review.card.id, time_created=review.time_created, time_completed=review.time_completed, review_status=review.review_status, correct=review.correct)
+        db.add(db_review)
+    db.commit()
+    return "Success"
 
 
 # Actions that should be behind worker

@@ -41,6 +41,9 @@ def main():
     # TODO which ids
     requests.get(base_url + f"reviews/mark_incorrect/2")
 
+    # Temporary as in-memory needs replacing with database
+    print("Writing to database")
+    requests.get(base_url + "save")
     return
 
 
