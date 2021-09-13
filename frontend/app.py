@@ -61,5 +61,12 @@ def create_note():
     return redirect(request.referrer)
 
 
+# Scaffolding
+@app.route("/save")
+def save():
+    requests.get(API_URL + "save")
+    return redirect(url_for("index"))
+
+
 if __name__ == "__main__":
     app.run(port=5001, debug=True, host="0.0.0.0")
