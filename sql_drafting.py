@@ -2,7 +2,7 @@ from typing import List
 
 from database import SessionLocal, engine
 import dbmodels
-from dbmodels import Deck, Note, Card, Review, NoteConnection
+from dbmodels import Deck, Note, Card, Review, NoteConnection, DispersalGroup
 from models import DeckOut, NoteOut
 
 dbmodels.Base.metadata.drop_all(bind=engine)
@@ -123,6 +123,13 @@ with Session(engine) as session:
     
     session.add(note_connection)
     session.commit()
+
+    # Add DisbursalGroup
+    disbursal_group = DispersalGroup(card_id=bonjour_regular.id,
+                                     group_id=99)
+    session.add(disbursal_group)
+    session.commit()
+
     # Queries
     decks_out = get_decks()
     print(decks_out)
