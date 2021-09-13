@@ -9,13 +9,13 @@ class DeckIn(BaseModel):
 
 
 class DeckOut(BaseModel):
-    id: int
-    name: str
-    notes_total: int
-    cards_total: int
-    time_created: int
-    count_reviews_due: int
-    count_new_cards: int
+    id: int  # From database
+    name: str  # From database
+    notes_total: int  # Calculated
+    cards_total: int  # Calculated
+    time_created: int  # From database
+    count_reviews_due: int  # Calculated
+    count_new_cards: int  # Calculated
 
 
 class NoteIn(BaseModel):
@@ -25,11 +25,12 @@ class NoteIn(BaseModel):
 
 
 class NoteOut(BaseModel):
-    id: int
-    deck_id: int
-    text_front: str
-    text_back: str
-    time_created: int
+    id: int  # From database
+    deck_id: int  # From database
+    text_front: str  # From database
+    text_back: str  # From database
+    time_created: int  # From database
+    # cards_total: int # Calculated
 
 
 # TODO remove question and answer, these are only to be stored in Note
@@ -45,23 +46,23 @@ class CardIn:
 
 
 class CardOut(BaseModel):
-    id: int
-    deck_id: int
-    note_id: int
-    direction: str
-    question: str
-    answer: str
-    status: str
-    time_created: int
-    time_latest_review: int
-    current_review_interval: int
-    dispersal_groups: List[int] = []
+    id: int  # From database
+    deck_id: int  # Calculated
+    note_id: int  # From database
+    direction: str  # From database
+    question: str  # From database
+    answer: str  # From database
+    status: str  # From database
+    time_created: int  # From database
+    time_latest_review: int  # Calculated
+    current_review_interval: int  # From database
+    dispersal_groups: List[int] = []  # From database
 
 
 class ReviewOut(BaseModel):
-    id: int
-    card: CardOut
-    time_created: int
-    time_completed: int
-    review_status: str
-    correct: int
+    id: int  # From database
+    card: CardOut  # Calculated
+    time_created: int  # From database
+    time_completed: int  # From database
+    review_status: str  # From database
+    correct: int  # From database
