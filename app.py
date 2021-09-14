@@ -205,7 +205,7 @@ def add_new_deck(new_deck: DeckIn) -> DeckOut:
 
 def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
-    note = NoteOut(**new_note.dict(), id=id, time_created=timestamp())
+    note = NoteOut(**new_note.dict(), id=id, time_created=timestamp(), audio_front="", audio_back="", image_front="", image_back="")
     NOTES.append(note)
     # Update deck stats
     card_count = get_count_notes_by_deck()
