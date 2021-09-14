@@ -29,6 +29,10 @@ class NoteOut(BaseModel):
     deck_id: int  # From database
     text_front: str  # From database
     text_back: str  # From database
+    audio_front: str  # From database
+    audio_back: str  # From database
+    image_front: str  # From database
+    image_back: str  # From database
     time_created: int  # From database
     # cards_total: int # Calculated
 

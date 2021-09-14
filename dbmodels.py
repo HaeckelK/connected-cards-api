@@ -20,6 +20,10 @@ class Note(Base):
     deck_id = Column(Integer, ForeignKey('decks.id'))
     text_front = Column(String, nullable=False)
     text_back = Column(String, nullable=False)
+    audio_front = Column(String, nullable=False)
+    audio_back = Column(String, nullable=False)
+    image_front = Column(String, nullable=False)
+    image_back = Column(String, nullable=False)
     time_created = Column(Integer, nullable=False)
     cards = relationship("Card")
 

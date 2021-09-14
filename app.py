@@ -148,7 +148,8 @@ def save_memory_to_database(db: Session = Depends(get_db)):
         db.add(db_deck)
 
     for note in NOTES:
-        db_note = Note(id=note.id, deck_id=note.deck_id, text_front=note.text_front, text_back=note.text_back, time_created=note.time_created)
+        db_note = Note(id=note.id, deck_id=note.deck_id, text_front=note.text_front, text_back=note.text_back, time_created=note.time_created,
+                       audio_front=note.audio_front, audio_back=note.audio_back, image_front=note.image_front, image_back=note.image_back)
         db.add(db_note)
 
     for card in CARDS:
@@ -205,7 +206,7 @@ def add_new_deck(new_deck: DeckIn) -> DeckOut:
 
 def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
-    note = NoteOut(**new_note.dict(), id=id, time_created=timestamp())
+    note = NoteOut(**new_note.dict(), id=id, time_created=timestamp(), audio_front="", audio_back="", image_front="", image_back="")
     NOTES.append(note)
     # Update deck stats
     card_count = get_count_notes_by_deck()
