@@ -8,11 +8,12 @@ from models import ReviewOut, CardOut
 # TODO allow max number of dispersal group cards
 class Scheduler:
     def __init__(self, new_cards_limit: int, total_cards_limit: int, allow_cards_from_same_note: bool,
-                 minimum_review_interval: int=86400) -> None:
+                 success_increment_factor: float, minimum_review_interval: int=86400) -> None:
         self.new_cards_limit = new_cards_limit
         self.allow_cards_from_same_note = allow_cards_from_same_note
         self.total_cards_limit = total_cards_limit
         self.minimum_review_interval = minimum_review_interval
+        self.success_increment_factor =success_increment_factor
         self.review_time = -1
         self.set_review_time()
         return
@@ -96,5 +97,5 @@ class Scheduler:
         if card.current_review_interval == -1:
             card.current_review_interval = self.minimum_review_interval
         else:
-            card.current_review_interval *= 2
+            card.current_review_interval *= self.success_increment_factor
         return card

@@ -25,7 +25,8 @@ app = FastAPI()
 
 scheduler = Scheduler(new_cards_limit=100,
                       total_cards_limit=100,
-                      allow_cards_from_same_note=True)
+                      allow_cards_from_same_note=True,
+                      success_increment_factor=2.0)
 
 
 @app.get("/decks", response_model=List[DeckOut])
