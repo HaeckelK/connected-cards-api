@@ -40,6 +40,7 @@ class Card(Base):
     current_review_interval = Column(Integer, nullable=False)
     time_created = Column(Integer, nullable=False)
     reviews = relationship("Review")
+    grade = Column(String, nullable=False)
 
 
 class Review(Base):

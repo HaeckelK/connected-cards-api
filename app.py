@@ -106,6 +106,7 @@ async def mark_review_correct(id: int):
             review.review_status = "reviewed"
             review.card.status = "seen"
             scheduler.schedule_card(card=review.card, correct=True)
+            review.card = grade_card(card=review.card)
     return "done"
 
 
@@ -118,6 +119,7 @@ async def mark_review_incorrect(id: int):
             review.review_status = "reviewed"
             review.card.status = "seen"
             scheduler.schedule_card(card=review.card, correct=False)
+            review.card = grade_card(card=review.card)
     return "done"
 
 # Dependency
@@ -145,7 +147,8 @@ def save_memory_to_database(db: Session = Depends(get_db)):
         db.add(db_note)
 
     for card in CARDS:
-        db_card = Card(id=card.id, note_id=card.note_id, direction=card.direction,question=card.question, answer=card.answer, status=card.status, current_review_interval=card.current_review_interval, time_created=card.time_created)
+        db_card = Card(id=card.id, note_id=card.note_id, direction=card.direction,question=card.question, answer=card.answer, status=card.status, current_review_interval=card.current_review_interval, time_created=card.time_created,
+                       grade=card.grade)
         db.add(db_card)
 
     for review in REVIEWS:
@@ -209,7 +212,8 @@ def add_new_note(new_note: NoteIn) -> NoteOut:
 
 def add_new_card(new_card: CardIn):
     id = len(CARDS) + 1
-    card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp(), time_latest_review=-1, current_review_interval=-1)
+    card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp(), time_latest_review=-1, current_review_interval=-1, grade="GRADE_NOT_ADDED")
+    card = grade_card(card)
     CARDS.append(card)
     # Update deck stats
     card_count = get_count_cards_by_deck()
@@ -224,6 +228,12 @@ def change_card_status(id: int, status: str):
             card.status = status
             return
     return
+
+
+def grade_card(card: CardOut) -> CardOut:
+    # TODO add actual boundary based functionality
+    card.grade = str(card.current_review_interval)[::-1]
+    return card
 
 
 # Under the hood data store work

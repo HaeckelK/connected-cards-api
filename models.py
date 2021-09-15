@@ -61,6 +61,7 @@ class CardOut(BaseModel):
     time_latest_review: int  # Calculated
     current_review_interval: int  # From database
     dispersal_groups: List[int] = []  # From database
+    grade: str  # From database
 
 
 class ReviewOut(BaseModel):
