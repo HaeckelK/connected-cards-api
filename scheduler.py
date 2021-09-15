@@ -87,6 +87,7 @@ class Scheduler:
             review = ReviewOut(
                 id=i + next_review_id, card=card, time_created=timestamp(), time_completed=-1, review_status="not_reviewed", correct=-1
             )
+            review.card = card
             reviews.append(review)
         return reviews
 
