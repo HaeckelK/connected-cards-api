@@ -125,12 +125,14 @@ async def create_note(new_note: NoteIn, db: Session = Depends(get_db)):
     add_new_card(
         CardIn(
             note_id=note.id, direction="regular", deck_id=note.deck_id, question=note.text_front, answer=note.text_back
-        )
+        ),
+        db
     )
     add_new_card(
         CardIn(
             note_id=note.id, direction="reverse", deck_id=note.deck_id, question=note.text_back, answer=note.text_front
-        )
+        ),
+        db
     )
 
     return note
@@ -185,10 +187,6 @@ def save_memory_to_database(db: Session = Depends(get_db)):
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
 
-    for card in CARDS:
-        db_card = Card(id=card.id, note_id=card.note_id, direction=card.direction,question=card.question, answer=card.answer, status=card.status, current_review_interval=card.current_review_interval, time_created=card.time_created,
-                       grade=card.grade)
-        db.add(db_card)
 
     for review in REVIEWS:
         db_review = Review(id=review.id, card_id=review.card.id, time_created=review.time_created, time_completed=review.time_completed, review_status=review.review_status, correct=review.correct)
@@ -246,11 +244,17 @@ def add_new_note(new_note: NoteIn, db: Session) -> NoteOut:
     return note
 
 
-def add_new_card(new_card: CardIn):
+def add_new_card(new_card: CardIn, db: Session):
     id = len(CARDS) + 1
     card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp(), time_latest_review=-1, current_review_interval=-1, grade="GRADE_NOT_ADDED")
     card = grade_card(card)
     CARDS.append(card)
+
+    # TODO disconnect from CARDS
+    db_card = Card(id=card.id, note_id=card.note_id, direction=card.direction,question=card.question, answer=card.answer, status=card.status, current_review_interval=card.current_review_interval, time_created=card.time_created,
+                    grade=card.grade)
+    db.add(db_card)
+    db.commit()
     return
 
 
