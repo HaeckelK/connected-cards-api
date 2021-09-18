@@ -18,7 +18,6 @@ DECKS, NOTES = [], []
 CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
-dbmodels.Base.metadata.drop_all(bind=engine)
 dbmodels.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -28,15 +27,35 @@ scheduler = Scheduler(new_cards_limit=100,
                       allow_cards_from_same_note=True,
                       success_increment_factor=2.0)
 
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 @app.get("/decks", response_model=List[DeckOut])
-async def get_decks():
-    # TODO should work this out after reviews?
+async def get_decks(db: Session = Depends(get_db)):
+    query = db.query(Deck).all()
+    db_decks = []
+    for deck in query:
+        data = deck.__dict__
+        data.pop('_sa_instance_state')
+        data["notes_total"] = -1
+        data["cards_total"] = -1
+        data["count_reviews_due"] = -1
+        data["count_new_cards"] = -1
+
+        db_decks.append(DeckOut(**data))
+
     # Update deck stats
     card_count = get_count_cards_by_deck(status="new")
-    for deck in DECKS:
+
+    for deck in db_decks:
         deck.count_new_cards = card_count.get(deck.id, 0)
-    return DECKS
+    return db_decks
 
 
 @app.get("/decks/{id}", response_model=DeckOut)
@@ -48,8 +67,11 @@ async def get_deck_by_id(id: int):
 
 
 @app.post("/decks", response_model=DeckOut)
-async def create_deck(new_deck: DeckIn):
+async def create_deck(new_deck: DeckIn, db: Session = Depends(get_db)):
     deck = add_new_deck(new_deck)
+    db_deck = Deck(id=deck.id, name=deck.name, time_created=deck.time_created)
+    db.add(db_deck)
+    db.commit()
     return deck
 
 
@@ -122,14 +144,6 @@ async def mark_review_incorrect(id: int):
             review.card = grade_card(card=review.card)
     return "done"
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 # Temporary scoffolding
 @app.get("/save")
 def save_memory_to_database(db: Session = Depends(get_db)):
@@ -137,9 +151,9 @@ def save_memory_to_database(db: Session = Depends(get_db)):
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
 
-    for deck in DECKS:
-        db_deck = Deck(id=deck.id, name=deck.name, time_created=deck.time_created)
-        db.add(db_deck)
+    # for deck in DECKS:
+    #     db_deck = Deck(id=deck.id, name=deck.name, time_created=deck.time_created)
+    #     db.add(db_deck)
 
     for note in NOTES:
         db_note = Note(id=note.id, deck_id=note.deck_id, text_front=note.text_front, text_back=note.text_back, time_created=note.time_created,
@@ -168,6 +182,8 @@ def generate_reviews():
 
 @app.get("/wipe")
 def wipe_data():
+    dbmodels.Base.metadata.drop_all(bind=engine)
+    dbmodels.Base.metadata.create_all(bind=engine)
     global DECKS, CARDS, REVIEWS, NOTES
     DECKS = []
     CARDS = []

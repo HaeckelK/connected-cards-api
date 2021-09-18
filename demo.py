@@ -16,6 +16,7 @@ def main():
     response = requests.post(base_url + "decks", data='{"name": "French"}')
     deck = DeckOut(**json.loads(response.content))
     print(deck)
+    requests.get(base_url + "decks")
 
     # Create a new note
     print("Create Note")
@@ -42,8 +43,8 @@ def main():
     requests.get(base_url + f"reviews/mark_incorrect/2")
 
     # Temporary as in-memory needs replacing with database
-    print("Writing to database")
-    requests.get(base_url + "save")
+    # print("Writing to database")
+    # requests.get(base_url + "save")
     return
 
 
