@@ -68,10 +68,20 @@ async def get_deck_by_id(id: int):
 
 @app.post("/decks", response_model=DeckOut)
 async def create_deck(new_deck: DeckIn, db: Session = Depends(get_db)):
-    deck = add_new_deck(new_deck)
-    db_deck = Deck(id=deck.id, name=deck.name, time_created=deck.time_created)
+    db_deck = Deck(name=new_deck.name, time_created=timestamp())
     db.add(db_deck)
     db.commit()
+    db.refresh(db_deck)
+
+    # TODO DRY see GET
+    data = db_deck.__dict__
+    data.pop('_sa_instance_state')
+    data["notes_total"] = -1
+    data["cards_total"] = -1
+    data["count_reviews_due"] = -1
+    data["count_new_cards"] = -1
+
+    deck = DeckOut(**data)
     return deck
 
 
@@ -208,13 +218,6 @@ def increment_scheduler():
 
 
 # Actual CRUD
-def add_new_deck(new_deck: DeckIn) -> DeckOut:
-    id = len(DECKS) + 1
-    deck = DeckOut(id=id, name=new_deck.name, notes_total=0, cards_total=0, time_created=timestamp(), count_reviews_due=0, count_new_cards=0)
-    DECKS.append(deck)
-    return deck
-
-
 def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
     note = NoteOut(**new_note.dict(), id=id, time_created=timestamp(), audio_front="", audio_back="", image_front="", image_back="")
