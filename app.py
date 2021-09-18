@@ -13,8 +13,6 @@ from sqlalchemy.orm import Session
 
 MINIMUM_INTERVAL = 86400
 
-
-NOTES = []
 CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
@@ -210,9 +208,8 @@ def generate_reviews():
 def wipe_data():
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
-    global CARDS, REVIEWS, NOTES
+    global CARDS, REVIEWS
     CARDS = []
-    NOTES = []
     REVIEWS = []
     return "wiped"
 
@@ -240,10 +237,11 @@ def add_new_note(new_note: NoteIn, db: Session) -> NoteOut:
     db.commit()
     db.refresh(db_note)
 
+    # TODO DRY see GET notes
+    data = db_note.__dict__
+    data.pop('_sa_instance_state')
+    note = NoteOut(**data)
 
-    id = len(NOTES) + 1
-    note = NoteOut(**new_note.dict(), id=id, time_created=timestamp(), audio_front="", audio_back="", image_front="", image_back="")
-    NOTES.append(note)
     return note
 
 
@@ -277,16 +275,6 @@ def get_count_cards_by_deck(status="all") -> Dict[int, int]:
     else:
         cards = [x for x in CARDS if x.status == status]
     for card in cards:
-        try:
-            count[card.deck_id] += 1
-        except  KeyError:
-            count[card.deck_id] = 1
-    return count
-
-
-def get_count_notes_by_deck() -> Dict[int, int]:
-    count = {}
-    for card in NOTES:
         try:
             count[card.deck_id] += 1
         except  KeyError:
