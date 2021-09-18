@@ -98,7 +98,16 @@ async def create_deck(new_deck: DeckIn, db: Session = Depends(get_db)):
 @app.get("/notes", response_model=List[NoteOut])
 async def get_notes(deck_id: Optional[str]=None, db: Session = Depends(get_db)):
     if deck_id:
-        return [x for x in NOTES if int(x.deck_id) == int(deck_id)]
+        db_note = db.query(Note).filter(Note.deck_id == deck_id).first()
+        if db_note:
+            output = []
+            # TODO DRY see below
+            data = db_note.__dict__
+            data.pop('_sa_instance_state')
+            output.append(NoteOut(**data))
+            return output
+        else:
+            raise HTTPException(status_code=400, detail=f"Note not found for deck id: {deck_id}")
     else:
         output = []
         notes = db.query(Note).all()
