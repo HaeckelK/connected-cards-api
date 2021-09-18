@@ -6,13 +6,13 @@ import scheduler as module
 
 
 def test_scheduler_init():
-    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100, success_increment_factor=2.0)
 
 
 # create_reviews
 def test_scheduler_create_reviews_empty():
     # Given a scheduler and empty cards and reviews
-    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100, success_increment_factor=2.0)
     cards = []
     reviews = []
     # When creating reviews
@@ -24,7 +24,7 @@ def test_scheduler_create_reviews_empty():
 def test_scheduler_create_reviews_properties(monkeypatch):
     monkeypatch.setattr(module, "timestamp", lambda: 0)
     # Given a scheduler, empty reviews and a card
-    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100, success_increment_factor=2.0)
     # TODO connect new card creation to app.py functions
     # TODO options on regular
     new_card = CardIn(note_id=1, direction="regular", deck_id=1, question="Hello", answer="Bonjour")
@@ -35,7 +35,8 @@ def test_scheduler_create_reviews_properties(monkeypatch):
             status="new",
             time_created=0,
             time_latest_review=-1,
-            current_review_interval=-1
+            current_review_interval=-1,
+            grade="A",
         )
     ]
     reviews = []
@@ -56,6 +57,7 @@ def test_scheduler_create_reviews_properties(monkeypatch):
                 time_created=0,
                 time_latest_review=-1,
                 current_review_interval=-1,
+                grade="A",
             ),
             time_created=0,
             time_completed=-1,
@@ -68,7 +70,7 @@ def test_scheduler_create_reviews_properties(monkeypatch):
 def test_scheduler_create_reviews_dispersal_group(monkeypatch):
     monkeypatch.setattr(module, "timestamp", lambda: 0)
     # Given a scheduler, empty reviews and multiple cards, and some with same dispersal group
-    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100, success_increment_factor=2.0)
     # TODO connect new card creation to app.py functions
     # TODO options on regular
     new_card = CardIn(note_id=1, direction="regular", deck_id=1, question="Hello", answer="Bonjour")
@@ -78,7 +80,8 @@ def test_scheduler_create_reviews_dispersal_group(monkeypatch):
             status="new",
             time_created=0,
             time_latest_review=-1,
-            current_review_interval=-1
+            current_review_interval=-1,
+            grade="A",
         )
     card1 = card_template.copy()
     card2 = card_template.copy()
@@ -105,7 +108,7 @@ def test_scheduler_create_reviews_dispersal_group(monkeypatch):
 
 def test_scheduler_create_reviews_dispersal_groups_all_distinct():
     # Given a scheduler, empty reviews and multiple cards, with no common dispersal group ids
-    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100, success_increment_factor=2.0)
     # TODO connect new card creation to app.py functions
     # TODO options on regular
     new_card = CardIn(note_id=1, direction="regular", deck_id=1, question="Hello", answer="Bonjour")
@@ -115,7 +118,8 @@ def test_scheduler_create_reviews_dispersal_groups_all_distinct():
             status="new",
             time_created=0,
             time_latest_review=-1,
-            current_review_interval=-1
+            current_review_interval=-1,
+            grade="A",
         )
     card1 = card_template.copy()
     card2 = card_template.copy()
@@ -147,7 +151,7 @@ def test_scheduler_create_reviews_dispersal_groups_all_distinct():
 def test_schedule_schedule_card_new_correct(monkeypatch):
     monkeypatch.setattr(module, "timestamp", lambda: 0)
     # Given a scheduler and a new card
-    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100, success_increment_factor=2.0)
     # TODO connect new card creation to app.py functions
     new_card = CardIn(note_id=1, direction="regular", deck_id=1, question="Hello", answer="Bonjour")
     card = CardOut(
@@ -156,7 +160,8 @@ def test_schedule_schedule_card_new_correct(monkeypatch):
             status="new",
             time_created=0,
             time_latest_review=-1,
-            current_review_interval=-1
+            current_review_interval=-1,
+            grade="A",
         )
     # When scheduling next review for correct answer
     card = scheduler.schedule_card(card, correct=True)
@@ -169,7 +174,7 @@ def test_schedule_schedule_card_new_correct(monkeypatch):
 def test_schedule_schedule_card_new_incorrect(monkeypatch):
     monkeypatch.setattr(module, "timestamp", lambda: 0)
     # Given a scheduler and a new card
-    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100)
+    scheduler = Scheduler(new_cards_limit=100, allow_cards_from_same_note=True, total_cards_limit=100, success_increment_factor=2.0)
     # TODO connect new card creation to app.py functions
     new_card = CardIn(note_id=1, direction="regular", deck_id=1, question="Hello", answer="Bonjour")
     card = CardOut(
@@ -178,7 +183,8 @@ def test_schedule_schedule_card_new_incorrect(monkeypatch):
             status="new",
             time_created=0,
             time_latest_review=-1,
-            current_review_interval=-1
+            current_review_interval=-1,
+            grade="A",
         )
     # When scheduling next review for incorrect answer
     card = scheduler.schedule_card(card, correct=False)
