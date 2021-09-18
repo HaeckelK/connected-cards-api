@@ -14,11 +14,10 @@ from sqlalchemy.orm import Session
 MINIMUM_INTERVAL = 86400
 
 
-DECKS, NOTES = [], []
+NOTES = []
 CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
-dbmodels.Base.metadata.drop_all(bind=engine)
 dbmodels.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -28,28 +27,71 @@ scheduler = Scheduler(new_cards_limit=100,
                       allow_cards_from_same_note=True,
                       success_increment_factor=2.0)
 
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 @app.get("/decks", response_model=List[DeckOut])
-async def get_decks():
-    # TODO should work this out after reviews?
+async def get_decks(db: Session = Depends(get_db)):
+    query = db.query(Deck).all()
+    db_decks = []
+    for deck in query:
+        data = deck.__dict__
+        data.pop('_sa_instance_state')
+        data["notes_total"] = -1
+        data["cards_total"] = -1
+        data["count_reviews_due"] = -1
+        data["count_new_cards"] = -1
+
+        db_decks.append(DeckOut(**data))
+
     # Update deck stats
     card_count = get_count_cards_by_deck(status="new")
-    for deck in DECKS:
+
+    for deck in db_decks:
         deck.count_new_cards = card_count.get(deck.id, 0)
-    return DECKS
+    return db_decks
 
 
 @app.get("/decks/{id}", response_model=DeckOut)
-async def get_deck_by_id(id: int):
-    for deck in DECKS:
-        if deck.id == id:
-            return deck
-    raise HTTPException(status_code=400, detail=f"Deck not found for id: {id}")
+async def get_deck_by_id(id: int, db: Session = Depends(get_db)):
+    db_deck = db.query(Deck).filter(Deck.id == id).first()
+    if db_deck:
+        # TODO DRY see GET
+        data = db_deck.__dict__
+        data.pop('_sa_instance_state')
+        data["notes_total"] = -1
+        data["cards_total"] = -1
+        data["count_reviews_due"] = -1
+        data["count_new_cards"] = -1
+
+        deck = DeckOut(**data)
+        return deck
+    else:
+        raise HTTPException(status_code=400, detail=f"Deck not found for id: {id}")
 
 
 @app.post("/decks", response_model=DeckOut)
-async def create_deck(new_deck: DeckIn):
-    deck = add_new_deck(new_deck)
+async def create_deck(new_deck: DeckIn, db: Session = Depends(get_db)):
+    db_deck = Deck(name=new_deck.name, time_created=timestamp())
+    db.add(db_deck)
+    db.commit()
+    db.refresh(db_deck)
+
+    # TODO DRY see GET
+    data = db_deck.__dict__
+    data.pop('_sa_instance_state')
+    data["notes_total"] = -1
+    data["cards_total"] = -1
+    data["count_reviews_due"] = -1
+    data["count_new_cards"] = -1
+
+    deck = DeckOut(**data)
     return deck
 
 
@@ -122,24 +164,12 @@ async def mark_review_incorrect(id: int):
             review.card = grade_card(card=review.card)
     return "done"
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 # Temporary scoffolding
 @app.get("/save")
 def save_memory_to_database(db: Session = Depends(get_db)):
     # Currently deletes all data from db - obviously not safe
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
-
-    for deck in DECKS:
-        db_deck = Deck(id=deck.id, name=deck.name, time_created=deck.time_created)
-        db.add(db_deck)
 
     for note in NOTES:
         db_note = Note(id=note.id, deck_id=note.deck_id, text_front=note.text_front, text_back=note.text_back, time_created=note.time_created,
@@ -168,8 +198,9 @@ def generate_reviews():
 
 @app.get("/wipe")
 def wipe_data():
-    global DECKS, CARDS, REVIEWS, NOTES
-    DECKS = []
+    dbmodels.Base.metadata.drop_all(bind=engine)
+    dbmodels.Base.metadata.create_all(bind=engine)
+    global CARDS, REVIEWS, NOTES
     CARDS = []
     NOTES = []
     REVIEWS = []
@@ -192,21 +223,10 @@ def increment_scheduler():
 
 
 # Actual CRUD
-def add_new_deck(new_deck: DeckIn) -> DeckOut:
-    id = len(DECKS) + 1
-    deck = DeckOut(id=id, name=new_deck.name, notes_total=0, cards_total=0, time_created=timestamp(), count_reviews_due=0, count_new_cards=0)
-    DECKS.append(deck)
-    return deck
-
-
 def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
     note = NoteOut(**new_note.dict(), id=id, time_created=timestamp(), audio_front="", audio_back="", image_front="", image_back="")
     NOTES.append(note)
-    # Update deck stats
-    card_count = get_count_notes_by_deck()
-    for deck in DECKS:
-        deck.notes_total = card_count.get(deck.id, 0)
     return note
 
 
@@ -215,10 +235,6 @@ def add_new_card(new_card: CardIn):
     card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp(), time_latest_review=-1, current_review_interval=-1, grade="GRADE_NOT_ADDED")
     card = grade_card(card)
     CARDS.append(card)
-    # Update deck stats
-    card_count = get_count_cards_by_deck()
-    for deck in DECKS:
-        deck.cards_total = card_count.get(deck.id, 0)
     return
 
 
