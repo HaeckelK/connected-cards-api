@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 MINIMUM_INTERVAL = 86400
 
 
-DECKS, NOTES = [], []
+NOTES = []
 CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
@@ -171,10 +171,6 @@ def save_memory_to_database(db: Session = Depends(get_db)):
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
 
-    # for deck in DECKS:
-    #     db_deck = Deck(id=deck.id, name=deck.name, time_created=deck.time_created)
-    #     db.add(db_deck)
-
     for note in NOTES:
         db_note = Note(id=note.id, deck_id=note.deck_id, text_front=note.text_front, text_back=note.text_back, time_created=note.time_created,
                        audio_front=note.audio_front, audio_back=note.audio_back, image_front=note.image_front, image_back=note.image_back)
@@ -204,8 +200,7 @@ def generate_reviews():
 def wipe_data():
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
-    global DECKS, CARDS, REVIEWS, NOTES
-    DECKS = []
+    global CARDS, REVIEWS, NOTES
     CARDS = []
     NOTES = []
     REVIEWS = []
@@ -232,10 +227,6 @@ def add_new_note(new_note: NoteIn) -> NoteOut:
     id = len(NOTES) + 1
     note = NoteOut(**new_note.dict(), id=id, time_created=timestamp(), audio_front="", audio_back="", image_front="", image_back="")
     NOTES.append(note)
-    # Update deck stats
-    card_count = get_count_notes_by_deck()
-    for deck in DECKS:
-        deck.notes_total = card_count.get(deck.id, 0)
     return note
 
 
@@ -244,10 +235,6 @@ def add_new_card(new_card: CardIn):
     card = CardOut(id=id, **asdict(new_card), status="new", time_created=timestamp(), time_latest_review=-1, current_review_interval=-1, grade="GRADE_NOT_ADDED")
     card = grade_card(card)
     CARDS.append(card)
-    # Update deck stats
-    card_count = get_count_cards_by_deck()
-    for deck in DECKS:
-        deck.cards_total = card_count.get(deck.id, 0)
     return
 
 
