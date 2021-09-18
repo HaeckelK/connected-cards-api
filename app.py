@@ -255,6 +255,7 @@ def add_new_card(new_card: CardIn, db: Session):
                     grade=card.grade)
     db.add(db_card)
     db.commit()
+    db.refresh(db_card)
     return
 
 
