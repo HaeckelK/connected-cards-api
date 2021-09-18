@@ -59,11 +59,21 @@ async def get_decks(db: Session = Depends(get_db)):
 
 
 @app.get("/decks/{id}", response_model=DeckOut)
-async def get_deck_by_id(id: int):
-    for deck in DECKS:
-        if deck.id == id:
-            return deck
-    raise HTTPException(status_code=400, detail=f"Deck not found for id: {id}")
+async def get_deck_by_id(id: int, db: Session = Depends(get_db)):
+    db_deck = db.query(Deck).filter(Deck.id == id).first()
+    if db_deck:
+        # TODO DRY see GET
+        data = db_deck.__dict__
+        data.pop('_sa_instance_state')
+        data["notes_total"] = -1
+        data["cards_total"] = -1
+        data["count_reviews_due"] = -1
+        data["count_new_cards"] = -1
+
+        deck = DeckOut(**data)
+        return deck
+    else:
+        raise HTTPException(status_code=400, detail=f"Deck not found for id: {id}")
 
 
 @app.post("/decks", response_model=DeckOut)
