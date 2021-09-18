@@ -96,11 +96,17 @@ async def create_deck(new_deck: DeckIn, db: Session = Depends(get_db)):
 
 
 @app.get("/notes", response_model=List[NoteOut])
-async def get_notes(deck_id: Optional[str]=None):
+async def get_notes(deck_id: Optional[str]=None, db: Session = Depends(get_db)):
     if deck_id:
         return [x for x in NOTES if int(x.deck_id) == int(deck_id)]
     else:
-        return NOTES
+        output = []
+        notes = db.query(Note).all()
+        for note in notes:
+            data = note.__dict__
+            data.pop('_sa_instance_state')
+            output.append(NoteOut(**data))
+        return output
 
 
 @app.post("/notes", response_model=NoteOut)
