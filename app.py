@@ -13,8 +13,6 @@ from sqlalchemy.orm import Session
 
 MINIMUM_INTERVAL = 86400
 
-
-NOTES = []
 CARDS: List[CardOut] = []
 REVIEWS: List[ReviewOut] = []
 
@@ -96,16 +94,32 @@ async def create_deck(new_deck: DeckIn, db: Session = Depends(get_db)):
 
 
 @app.get("/notes", response_model=List[NoteOut])
-async def get_notes(deck_id: Optional[str]=None):
+async def get_notes(deck_id: Optional[str]=None, db: Session = Depends(get_db)):
     if deck_id:
-        return [x for x in NOTES if int(x.deck_id) == int(deck_id)]
+        db_notes = db.query(Note).filter(Note.deck_id == deck_id).all()
+        if db_notes:
+            output = []
+            for db_note in db_notes:
+                # TODO DRY see below
+                data = db_note.__dict__
+                data.pop('_sa_instance_state')
+                output.append(NoteOut(**data))
+            return output
+        else:
+            raise HTTPException(status_code=400, detail=f"Note not found for deck id: {deck_id}")
     else:
-        return NOTES
+        output = []
+        notes = db.query(Note).all()
+        for note in notes:
+            data = note.__dict__
+            data.pop('_sa_instance_state')
+            output.append(NoteOut(**data))
+        return output
 
 
 @app.post("/notes", response_model=NoteOut)
-async def create_note(new_note: NoteIn):
-    note = add_new_note(new_note)
+async def create_note(new_note: NoteIn, db: Session = Depends(get_db)):
+    note = add_new_note(new_note, db)
 
     # Add cards from note
     add_new_card(
@@ -171,11 +185,6 @@ def save_memory_to_database(db: Session = Depends(get_db)):
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
 
-    for note in NOTES:
-        db_note = Note(id=note.id, deck_id=note.deck_id, text_front=note.text_front, text_back=note.text_back, time_created=note.time_created,
-                       audio_front=note.audio_front, audio_back=note.audio_back, image_front=note.image_front, image_back=note.image_back)
-        db.add(db_note)
-
     for card in CARDS:
         db_card = Card(id=card.id, note_id=card.note_id, direction=card.direction,question=card.question, answer=card.answer, status=card.status, current_review_interval=card.current_review_interval, time_created=card.time_created,
                        grade=card.grade)
@@ -200,9 +209,8 @@ def generate_reviews():
 def wipe_data():
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
-    global CARDS, REVIEWS, NOTES
+    global CARDS, REVIEWS
     CARDS = []
-    NOTES = []
     REVIEWS = []
     return "wiped"
 
@@ -223,10 +231,18 @@ def increment_scheduler():
 
 
 # Actual CRUD
-def add_new_note(new_note: NoteIn) -> NoteOut:
-    id = len(NOTES) + 1
-    note = NoteOut(**new_note.dict(), id=id, time_created=timestamp(), audio_front="", audio_back="", image_front="", image_back="")
-    NOTES.append(note)
+def add_new_note(new_note: NoteIn, db: Session) -> NoteOut:
+    db_note = Note(deck_id=new_note.deck_id, text_front=new_note.text_front, text_back=new_note.text_back, time_created=timestamp(),
+                    audio_front="", audio_back="", image_front="", image_back="")
+    db.add(db_note)
+    db.commit()
+    db.refresh(db_note)
+
+    # TODO DRY see GET notes
+    data = db_note.__dict__
+    data.pop('_sa_instance_state')
+    note = NoteOut(**data)
+
     return note
 
 
@@ -260,16 +276,6 @@ def get_count_cards_by_deck(status="all") -> Dict[int, int]:
     else:
         cards = [x for x in CARDS if x.status == status]
     for card in cards:
-        try:
-            count[card.deck_id] += 1
-        except  KeyError:
-            count[card.deck_id] = 1
-    return count
-
-
-def get_count_notes_by_deck() -> Dict[int, int]:
-    count = {}
-    for card in NOTES:
         try:
             count[card.deck_id] += 1
         except  KeyError:
