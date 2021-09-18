@@ -104,8 +104,8 @@ async def get_notes(deck_id: Optional[str]=None):
 
 
 @app.post("/notes", response_model=NoteOut)
-async def create_note(new_note: NoteIn):
-    note = add_new_note(new_note)
+async def create_note(new_note: NoteIn, db: Session = Depends(get_db)):
+    note = add_new_note(new_note, db)
 
     # Add cards from note
     add_new_card(
@@ -171,11 +171,6 @@ def save_memory_to_database(db: Session = Depends(get_db)):
     dbmodels.Base.metadata.drop_all(bind=engine)
     dbmodels.Base.metadata.create_all(bind=engine)
 
-    for note in NOTES:
-        db_note = Note(id=note.id, deck_id=note.deck_id, text_front=note.text_front, text_back=note.text_back, time_created=note.time_created,
-                       audio_front=note.audio_front, audio_back=note.audio_back, image_front=note.image_front, image_back=note.image_back)
-        db.add(db_note)
-
     for card in CARDS:
         db_card = Card(id=card.id, note_id=card.note_id, direction=card.direction,question=card.question, answer=card.answer, status=card.status, current_review_interval=card.current_review_interval, time_created=card.time_created,
                        grade=card.grade)
@@ -223,7 +218,14 @@ def increment_scheduler():
 
 
 # Actual CRUD
-def add_new_note(new_note: NoteIn) -> NoteOut:
+def add_new_note(new_note: NoteIn, db: Session) -> NoteOut:
+    db_note = Note(deck_id=new_note.deck_id, text_front=new_note.text_front, text_back=new_note.text_back, time_created=timestamp(),
+                    audio_front="", audio_back="", image_front="", image_back="")
+    db.add(db_note)
+    db.commit()
+    db.refresh(db_note)
+
+
     id = len(NOTES) + 1
     note = NoteOut(**new_note.dict(), id=id, time_created=timestamp(), audio_front="", audio_back="", image_front="", image_back="")
     NOTES.append(note)
